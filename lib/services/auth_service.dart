@@ -20,7 +20,7 @@ class AuthService {
   }) async {
     try {
       UserCredential result;
-      
+
       // Use a more defensive approach to handle potential type casting issues
       try {
         result = await _auth.signInWithEmailAndPassword(
@@ -57,7 +57,7 @@ class AuthService {
   }) async {
     try {
       UserCredential result;
-      
+
       // Use a more defensive approach to handle potential type casting issues
       try {
         result = await _auth.createUserWithEmailAndPassword(

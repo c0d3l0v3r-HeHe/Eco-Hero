@@ -1,4 +1,13 @@
 import 'package:flutter/material.dart';
+import 'carbon_calculator_screen.dart';
+import 'news_screen.dart';
+import 'tasks_screen.dart';
+import 'waste_scanner_screen.dart';
+import 'profile_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/user_profile.dart';
+import '../services/user_service.dart';
+import 'dart:io';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,9 +20,24 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    _initializeUserProfile();
+  }
+
+  Future<void> _initializeUserProfile() async {
+    try {
+      await UserService.createOrUpdateUserProfile();
+    } catch (e) {
+      debugPrint('Error initializing user profile: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
+      drawer: _buildProfileDrawer(),
       appBar: AppBar(
         title: const Text(
           'EcoHero',
@@ -28,13 +52,34 @@ class _HomeScreenState extends State<HomeScreen> {
               // TODO: Implement notifications
             },
           ),
-          IconButton(
-            icon: const Icon(
-              Icons.account_circle_outlined,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              // TODO: Implement profile
+          // EnvPoints Display
+          StreamBuilder<UserProfile?>(
+            stream: UserService.getUserProfileStream(),
+            builder: (context, snapshot) {
+              final envPoints = snapshot.data?.envPoints ?? 0;
+              return Container(
+                margin: const EdgeInsets.only(right: 15, top: 12, bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.eco, color: Colors.green.shade700, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      snapshot.hasError ? '0' : '$envPoints',
+                      style: TextStyle(
+                        color: Colors.green.shade700,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              );
             },
           ),
         ],
@@ -86,16 +131,13 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return _buildDashboard();
       case 1:
-        return _buildComingSoon('Tasks', 'Submit eco-friendly activities');
+        return const TasksScreen();
       case 2:
-        return _buildComingSoon(
-          'Carbon Calculator',
-          'Calculate your footprint',
-        );
+        return const CarbonCalculatorScreen();
       case 3:
-        return _buildComingSoon('Waste Classifier', 'Classify your waste');
+        return const WasteScannerScreen();
       case 4:
-        return _buildComingSoon('News', 'Environmental updates');
+        return const NewsScreen();
       default:
         return _buildDashboard();
     }
@@ -316,33 +358,297 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildComingSoon(String title, String subtitle) {
-    return Center(
+  Widget _buildProfileDrawer() {
+    return Drawer(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.construction, size: 80, color: Colors.grey.shade400),
-          const SizedBox(height: 24),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          // Profile Header - Clickable to open profile screen
+          StreamBuilder<UserProfile?>(
+            stream: UserService.getUserProfileStream(),
+            builder: (context, snapshot) {
+              final userProfile = snapshot.data;
+              final user = FirebaseAuth.instance.currentUser;
+              
+              return GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.only(top: 40, left: 20, right: 20, bottom: 20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.green.shade600, Colors.green.shade800],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          // Profile Image
+                          CircleAvatar(
+                            radius: 35,
+                            backgroundColor: Colors.white,
+                            backgroundImage: userProfile?.profileImageUrl != null
+                                ? (userProfile!.profileImageUrl!.startsWith('http') 
+                                    ? NetworkImage(userProfile.profileImageUrl!) as ImageProvider
+                                    : FileImage(File(userProfile.profileImageUrl!)))
+                                : null,
+                            child: userProfile?.profileImageUrl == null
+                                ? Icon(
+                                    Icons.person,
+                                    size: 35,
+                                    color: Colors.green.shade600,
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userProfile?.displayName ?? user?.displayName ?? 'EcoHero User',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  user?.email ?? 'No email',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.eco, color: Colors.white, size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${userProfile?.envPoints ?? 0} EnvPoints',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.edit,
+                            color: Colors.white70,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.touch_app, color: Colors.white70, size: 16),
+                            SizedBox(width: 6),
+                            Text(
+                              'Tap to edit profile',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Coming Soon!',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.green.shade700,
+          
+          // Menu items
+          Expanded(
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                ListTile(
+                  leading: Icon(Icons.favorite, color: Colors.pink.shade400),
+                  title: const Text(
+                    'Donate',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: const Text('Support environmental causes'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showDonateDialog();
+                  },
+                ),
+                const Divider(),
+                const Spacer(),
+                // Logout at bottom
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(
+                      fontSize: 16, 
+                      fontWeight: FontWeight.w500,
+                      color: Colors.red,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    _showLogoutConfirmation();
+                  },
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
+  void _showDonateDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.favorite, color: Colors.pink.shade400),
+              const SizedBox(width: 8),
+              const Text('Donate for Environment'),
+            ],
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Support environmental initiatives and help make a difference!',
+                style: TextStyle(fontSize: 16),
+              ),
+              SizedBox(height: 16),
+              Text(
+                '🌱 Tree planting projects\n'
+                '♻️ Waste management programs\n'
+                '🌊 Ocean cleanup initiatives\n'
+                '⚡ Renewable energy projects',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Coming soon: Integrated donation system',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Donation feature coming soon! 💚'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pink.shade400,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Learn More'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.logout, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Logout'),
+            ],
+          ),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Logged out successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error signing out: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 }
