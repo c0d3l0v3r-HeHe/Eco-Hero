@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "985115185980",
+    "project_id": "eco-hero-app",
+    "storage_bucket": "eco-hero-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:985115185980:android:184e3e55ec6ab432e5c439",
+        "android_client_info": {
+          "package_name": "com.c0d3l0v3r.eco_hero_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "985115185980-trtontftmfqd9qm16plcetg3p3rh1e2s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANDYawFYe_w3-SQICVP28k_tpHQmSGwno"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "985115185980-trtontftmfqd9qm16plcetg3p3rh1e2s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
