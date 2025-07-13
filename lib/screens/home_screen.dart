@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white,
               ),
               onPressed: () {
-                // TODO: Implement notifications
+                _showNotificationComingSoonDialog();
               },
             ),
             // EnvPoints Display
@@ -457,30 +457,35 @@ class _HomeScreenState extends State<HomeScreen> {
                       Row(
                         children: [
                           // Profile Image
-                          CircleAvatar(
-                            radius: 35,
-                            backgroundColor: Colors.white,
-                            backgroundImage:
-                                userProfile?.profileImageUrl != null
-                                    ? (userProfile!.profileImageUrl!.startsWith(
-                                          'http',
-                                        )
-                                        ? NetworkImage(
-                                              userProfile.profileImageUrl!,
-                                            )
-                                            as ImageProvider
-                                        : FileImage(
-                                          File(userProfile.profileImageUrl!),
-                                        ))
-                                    : null,
-                            child:
-                                userProfile?.profileImageUrl == null
-                                    ? Icon(
-                                      Icons.person,
-                                      size: 35,
-                                      color: Colors.green.shade600,
-                                    )
-                                    : null,
+                          GestureDetector(
+                            onTap:
+                                () => _showProfilePictureDialog(
+                                  userProfile?.profileImageUrl,
+                                ),
+                            child: CircleAvatar(
+                              radius: 35,
+                              backgroundColor: Colors.white,
+                              backgroundImage:
+                                  userProfile?.profileImageUrl != null
+                                      ? (userProfile!.profileImageUrl!
+                                              .startsWith('http')
+                                          ? NetworkImage(
+                                                userProfile.profileImageUrl!,
+                                              )
+                                              as ImageProvider
+                                          : FileImage(
+                                            File(userProfile.profileImageUrl!),
+                                          ))
+                                      : null,
+                              child:
+                                  userProfile?.profileImageUrl == null
+                                      ? Icon(
+                                        Icons.person,
+                                        size: 35,
+                                        color: Colors.green.shade600,
+                                      )
+                                      : null,
+                            ),
                           ),
                           const SizedBox(width: 15),
                           Expanded(
@@ -694,6 +699,63 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+
+  void _showNotificationComingSoonDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.notifications,
+                  color: Colors.blue.shade600,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Notifications',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Notifications will be available in the next version! Stay tuned for updates.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Got it!'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showProfilePictureDialog(String? profileImageUrl) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.8),
+      builder: (BuildContext context) {
+        return ProfilePictureDialog(profileImageUrl: profileImageUrl);
+      },
+    );
+  }
 }
 
 class DonateDialog extends StatefulWidget {
@@ -897,6 +959,119 @@ class _DonateDialogState extends State<DonateDialog>
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Donate by your talent, every penny is appreciated but that is not all we care about! 💚',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.blue.shade800,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Follow us on social media:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                // TODO: Add Facebook link
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Facebook link coming soon!'),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1877F2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.facebook,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                // TODO: Add Instagram link
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Instagram link coming soon!',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFFE4405F),
+                                      Color(0xFFFCAF45),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                // TODO: Add X (Twitter) link
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'X (Twitter) link coming soon!',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  '𝕏',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -921,6 +1096,164 @@ class _DonateDialogState extends State<DonateDialog>
                 child: const Text('Notify Me'),
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class ProfilePictureDialog extends StatefulWidget {
+  final String? profileImageUrl;
+
+  const ProfilePictureDialog({super.key, this.profileImageUrl});
+
+  @override
+  State<ProfilePictureDialog> createState() => _ProfilePictureDialogState();
+}
+
+class _ProfilePictureDialogState extends State<ProfilePictureDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              alignment: Alignment.center,
+              child: Opacity(
+                opacity: _opacityAnimation.value,
+                child: Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: Stack(
+                    children: [
+                      // Profile Picture
+                      Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child:
+                              widget.profileImageUrl != null
+                                  ? (widget.profileImageUrl!.startsWith('http')
+                                      ? Image.network(
+                                        widget.profileImageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return Icon(
+                                            Icons.person,
+                                            size: 120,
+                                            color: Colors.green.shade600,
+                                          );
+                                        },
+                                      )
+                                      : Image.file(
+                                        File(widget.profileImageUrl!),
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return Icon(
+                                            Icons.person,
+                                            size: 120,
+                                            color: Colors.green.shade600,
+                                          );
+                                        },
+                                      ))
+                                  : Icon(
+                                    Icons.person,
+                                    size: 120,
+                                    color: Colors.green.shade600,
+                                  ),
+                        ),
+                      ),
+                      // Edit button only
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade600,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const ProfileScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         );
       },

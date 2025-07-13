@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../services/user_service.dart';
+import '../services/content_filter_service.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final String? googleDisplayName;
@@ -120,7 +121,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
   }
 
   Future<void> _completeSetup() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      // Show helpful suggestions if name validation fails
+      if (!ContentFilterService.isDisplayNameAppropriate(
+        _nameController.text,
+      )) {
+        _showNameSuggestions();
+      }
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -164,6 +173,68 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _showNameSuggestions() {
+    final suggestions = ContentFilterService.suggestAlternativeNames();
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.lightbulb, color: Colors.amber),
+                SizedBox(width: 8),
+                Text('Name Suggestions'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'How about trying one of these eco-friendly names?',
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                ...suggestions
+                    .map(
+                      (name) => Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            _nameController.text = name;
+                            Navigator.pop(context);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.green.shade300),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            name,
+                            style: TextStyle(color: Colors.green.shade700),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('I\'ll choose my own'),
+              ),
+            ],
+          ),
+    );
   }
 
   @override
@@ -343,6 +414,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
                         if (value?.trim().isEmpty ?? true) {
                           return 'Please enter your name';
                         }
+                        if (!ContentFilterService.isDisplayNameAppropriate(
+                          value!,
+                        )) {
+                          return ContentFilterService.getDisplayNameErrorMessage();
+                        }
                         return null;
                       },
                     ),
@@ -364,6 +440,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
                         filled: true,
                         fillColor: Colors.white,
                       ),
+                      validator: (value) {
+                        if (value != null && value.trim().isNotEmpty) {
+                          if (!ContentFilterService.isBioAppropriate(value)) {
+                            return ContentFilterService.getBioErrorMessage();
+                          }
+                        }
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 20),

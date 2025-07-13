@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../models/user_profile.dart';
 import '../services/user_service.dart';
+import '../services/content_filter_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -345,6 +346,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Please enter a display name';
+                                }
+                                if (!ContentFilterService.isDisplayNameAppropriate(
+                                  value,
+                                )) {
+                                  return ContentFilterService.getDisplayNameErrorMessage();
                                 }
                                 return null;
                               },
