@@ -99,6 +99,33 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Google Sign-In failed';
+
+        if (e.toString().contains('sign_in_failed')) {
+          errorMessage =
+              'Google Sign-In is not configured properly. Please try email/password login instead.';
+        } else if (e.toString().contains('network_error')) {
+          errorMessage =
+              'Network error. Please check your internet connection.';
+        } else if (e.toString().contains('PlatformException')) {
+          errorMessage =
+              'Google Sign-In configuration issue. Using email/password login is recommended.';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Google Sign-In failed: ${e.toString()}'),

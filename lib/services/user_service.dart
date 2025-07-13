@@ -15,22 +15,29 @@ class UserService {
   static Future<UserProfile> createOrUpdateUserProfile({
     String? displayName,
     String? profileImageUrl,
+    String? bio,
+    bool? isPublic,
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No authenticated user');
 
     final userDoc = await _firestore.collection('users').doc(user.uid).get();
-    
+
     if (userDoc.exists) {
       // Update existing profile
       final currentProfile = UserProfile.fromJson(userDoc.data()!);
       final updatedProfile = currentProfile.copyWith(
         displayName: displayName ?? currentProfile.displayName,
         profileImageUrl: profileImageUrl ?? currentProfile.profileImageUrl,
+        bio: bio ?? currentProfile.bio,
+        isPublic: isPublic ?? currentProfile.isPublic,
         lastUpdated: DateTime.now(),
       );
-      
-      await _firestore.collection('users').doc(user.uid).update(updatedProfile.toJson());
+
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .update(updatedProfile.toJson());
       return updatedProfile;
     } else {
       // Create new profile
@@ -39,12 +46,17 @@ class UserService {
         email: user.email ?? '',
         displayName: displayName ?? user.displayName ?? 'Eco Hero',
         profileImageUrl: profileImageUrl,
+        bio: bio,
+        isPublic: isPublic ?? true,
         envPoints: 0,
         createdAt: DateTime.now(),
         lastUpdated: DateTime.now(),
       );
-      
-      await _firestore.collection('users').doc(user.uid).set(newProfile.toJson());
+
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .set(newProfile.toJson());
       return newProfile;
     }
   }
@@ -83,18 +95,19 @@ class UserService {
       // Get app documents directory
       final directory = await getApplicationDocumentsDirectory();
       final profileImagesDir = Directory('${directory.path}/profile_images');
-      
+
       if (!await profileImagesDir.exists()) {
         await profileImagesDir.create(recursive: true);
       }
 
       // Create unique filename
-      final fileName = 'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final fileName =
+          'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final localFile = File('${profileImagesDir.path}/$fileName');
 
       // Copy the image to local storage
       await imageFile.copy(localFile.path);
-      
+
       debugPrint('Profile image saved locally: ${localFile.path}');
       return localFile.path;
     } catch (e) {
@@ -119,6 +132,31 @@ class UserService {
     final profile = await getUserProfile();
     return profile?.envPoints ?? 0;
   }
+
+  /// Get top users for leaderboard (only public profiles)
+  static Stream<List<UserProfile>> getTopUsers({int limit = 100}) {
+    try {
+      return _firestore
+          .collection('users')
+          .orderBy('envPoints', descending: true)
+          .limit(limit * 2) // Get more to filter client-side
+          .snapshots()
+          .map((snapshot) {
+            // Filter for public profiles and apply limit client-side
+            final publicUsers =
+                snapshot.docs
+                    .map((doc) => UserProfile.fromJson(doc.data()))
+                    .where((user) => user.isPublic)
+                    .take(limit)
+                    .toList();
+            return publicUsers;
+          });
+    } catch (e) {
+      debugPrint('Error fetching top users: $e');
+      // Return empty stream if Firestore fails
+      return Stream.value(<UserProfile>[]);
+    }
+  }
 }
 
 class TaskService {
@@ -137,7 +175,8 @@ class TaskService {
 
       // Get AI score for the task
       final aiScore = await _evaluateTaskWithAI(description, category);
-      final pointsEarned = (aiScore * 10).round(); // Convert 0-10 score to points
+      final pointsEarned =
+          (aiScore * 10).round(); // Convert 0-10 score to points
 
       final task = EcoTask(
         id: DateTime.now().millisecondsSinceEpoch.toString(), // Fallback ID
@@ -183,10 +222,11 @@ class TaskService {
           .where('userId', isEqualTo: uid)
           .snapshots()
           .map((snapshot) {
-            final tasks = snapshot.docs
-                .map((doc) => EcoTask.fromJson(doc.data()))
-                .toList();
-            
+            final tasks =
+                snapshot.docs
+                    .map((doc) => EcoTask.fromJson(doc.data()))
+                    .toList();
+
             // Sort locally by completedAt (most recent first)
             tasks.sort((a, b) => b.completedAt.compareTo(a.completedAt));
             return tasks;
@@ -199,7 +239,10 @@ class TaskService {
   }
 
   /// AI evaluation of eco tasks
-  static Future<double> _evaluateTaskWithAI(String description, String category) async {
+  static Future<double> _evaluateTaskWithAI(
+    String description,
+    String category,
+  ) async {
     try {
       // Use the existing AI service from news_service.dart
       final prompt = '''
@@ -231,14 +274,14 @@ Return only a single number between 0 and 10 (decimals allowed).
 
       final aiService = AIService();
       final response = await aiService.summarizeArticle(mockArticle);
-      
+
       // Extract number from AI response
       final scoreMatch = RegExp(r'(\d+\.?\d*)').firstMatch(response);
       if (scoreMatch != null) {
         final score = double.tryParse(scoreMatch.group(1)!) ?? 5.0;
         return score.clamp(0.0, 10.0);
       }
-      
+
       return _calculateTaskScore(description, category);
     } catch (e) {
       // Fallback scoring if AI fails
@@ -249,7 +292,7 @@ Return only a single number between 0 and 10 (decimals allowed).
   /// Simple task scoring algorithm (can be enhanced with actual AI)
   static double _calculateTaskScore(String description, String category) {
     double baseScore = 5.0; // Start with middle score
-    
+
     // Category bonuses
     switch (category.toLowerCase()) {
       case 'recycling':
@@ -268,11 +311,18 @@ Return only a single number between 0 and 10 (decimals allowed).
 
     // Description analysis (simple keyword matching)
     final keywords = description.toLowerCase();
-    if (keywords.contains('reduce') || keywords.contains('save')) baseScore += 0.5;
-    if (keywords.contains('recycle') || keywords.contains('reuse')) baseScore += 0.5;
-    if (keywords.contains('solar') || keywords.contains('renewable')) baseScore += 1.0;
-    if (keywords.contains('walk') || keywords.contains('bike') || keywords.contains('public transport')) baseScore += 1.0;
-    if (keywords.contains('plastic') || keywords.contains('waste')) baseScore += 0.5;
+    if (keywords.contains('reduce') || keywords.contains('save'))
+      baseScore += 0.5;
+    if (keywords.contains('recycle') || keywords.contains('reuse'))
+      baseScore += 0.5;
+    if (keywords.contains('solar') || keywords.contains('renewable'))
+      baseScore += 1.0;
+    if (keywords.contains('walk') ||
+        keywords.contains('bike') ||
+        keywords.contains('public transport'))
+      baseScore += 1.0;
+    if (keywords.contains('plastic') || keywords.contains('waste'))
+      baseScore += 0.5;
 
     // Ensure score is within 0-10 range
     return baseScore.clamp(0.0, 10.0);
@@ -332,18 +382,19 @@ class WasteService {
       // Get app documents directory
       final directory = await getApplicationDocumentsDirectory();
       final wasteImagesDir = Directory('${directory.path}/waste_images');
-      
+
       if (!await wasteImagesDir.exists()) {
         await wasteImagesDir.create(recursive: true);
       }
 
       // Create unique filename
-      final fileName = 'waste_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final fileName =
+          'waste_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final localFile = File('${wasteImagesDir.path}/$fileName');
 
       // Copy the image to local storage
       await imageFile.copy(localFile.path);
-      
+
       debugPrint('Waste image saved locally: ${localFile.path}');
       return localFile.path;
     } catch (e) {
@@ -354,10 +405,12 @@ class WasteService {
   }
 
   /// Simple waste classification (would be replaced with actual AI/ML)
-  static Future<Map<String, dynamic>> _classifyWasteImage(File imageFile) async {
+  static Future<Map<String, dynamic>> _classifyWasteImage(
+    File imageFile,
+  ) async {
     // This is a placeholder - in a real app, you'd use ML Kit, TensorFlow Lite,
     // or a cloud-based image classification service
-    
+
     // Simulate AI processing delay
     await Future.delayed(const Duration(seconds: 2));
 
@@ -367,13 +420,15 @@ class WasteService {
       {
         'classification': 'Plastic Bottle',
         'wasteType': 'plastic',
-        'disposalAdvice': 'Remove cap and label, rinse, and place in recycling bin.',
+        'disposalAdvice':
+            'Remove cap and label, rinse, and place in recycling bin.',
         'confidence': 0.85,
       },
       {
         'classification': 'Paper Document',
         'wasteType': 'paper',
-        'disposalAdvice': 'Remove any plastic components and place in paper recycling.',
+        'disposalAdvice':
+            'Remove any plastic components and place in paper recycling.',
         'confidence': 0.92,
       },
       {
@@ -385,13 +440,15 @@ class WasteService {
       {
         'classification': 'Food Waste',
         'wasteType': 'organic',
-        'disposalAdvice': 'Compost if possible, otherwise dispose in organic waste bin.',
+        'disposalAdvice':
+            'Compost if possible, otherwise dispose in organic waste bin.',
         'confidence': 0.89,
       },
       {
         'classification': 'Electronic Device',
         'wasteType': 'electronic',
-        'disposalAdvice': 'Take to electronic waste recycling center. Do not put in regular trash.',
+        'disposalAdvice':
+            'Take to electronic waste recycling center. Do not put in regular trash.',
         'confidence': 0.94,
       },
     ];
@@ -402,7 +459,9 @@ class WasteService {
   }
 
   /// Get user's waste classifications
-  static Stream<List<WasteClassification>> getUserWasteClassifications([String? userId]) {
+  static Stream<List<WasteClassification>> getUserWasteClassifications([
+    String? userId,
+  ]) {
     final uid = userId ?? _auth.currentUser?.uid;
     if (uid == null) return Stream.value([]);
 
@@ -411,8 +470,11 @@ class WasteService {
         .where('userId', isEqualTo: uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => WasteClassification.fromJson(doc.data()))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs
+                  .map((doc) => WasteClassification.fromJson(doc.data()))
+                  .toList(),
+        );
   }
 }

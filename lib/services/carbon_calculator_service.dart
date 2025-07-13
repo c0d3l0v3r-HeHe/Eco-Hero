@@ -54,7 +54,11 @@ class CarbonCalculatorService {
     final wasteEmissions = _calculateWaste(input);
 
     // Calculate total
-    final total = transportationEmissions + energyEmissions + foodEmissions + wasteEmissions;
+    final total =
+        transportationEmissions +
+        energyEmissions +
+        foodEmissions +
+        wasteEmissions;
 
     // Create detailed breakdown
     final details = {
@@ -130,10 +134,10 @@ class CarbonCalculatorService {
 
     total += input.meatMeals * _emissionFactors['meat_meal']!;
     total += input.vegetarianMeals * _emissionFactors['vegetarian_meal']!;
-    
+
     // Local food reduces emissions
     total += input.localFood * _emissionFactors['local_food_bonus']!;
-    
+
     // Processed food increases emissions
     total += input.processedFood * _emissionFactors['processed_food_penalty']!;
 
@@ -165,37 +169,53 @@ class CarbonCalculatorService {
   /// Get user's carbon footprint history
   Future<List<CarbonFootprint>> getUserCarbonHistory(String userId) async {
     try {
-      final querySnapshot = await _firestore
-          .collection('carbon_footprints')
-          .where('userId', isEqualTo: userId)
-          .orderBy('date', descending: true)
-          .limit(30) // Last 30 entries
-          .get();
+      final querySnapshot =
+          await _firestore
+              .collection('carbon_footprints')
+              .where('userId', isEqualTo: userId)
+              .get();
 
-      return querySnapshot.docs
-          .map((doc) => CarbonFootprint.fromMap(doc.data(), doc.id))
-          .toList();
+      // Convert to list and sort by date in the app
+      final footprints =
+          querySnapshot.docs
+              .map((doc) => CarbonFootprint.fromMap(doc.data(), doc.id))
+              .toList();
+
+      // Sort by date descending (newest first)
+      footprints.sort((a, b) => b.date.compareTo(a.date));
+
+      // Return last 30 entries
+      return footprints.take(30).toList();
     } catch (e) {
       throw Exception('Failed to get carbon history: $e');
     }
   }
 
   /// Get user's average daily carbon footprint
-  Future<double> getAverageDailyCarbonFootprint(String userId, {int days = 7}) async {
+  Future<double> getAverageDailyCarbonFootprint(
+    String userId, {
+    int days = 7,
+  }) async {
     try {
       final startDate = DateTime.now().subtract(Duration(days: days));
-      
-      final querySnapshot = await _firestore
-          .collection('carbon_footprints')
-          .where('userId', isEqualTo: userId)
-          .where('date', isGreaterThan: Timestamp.fromDate(startDate))
-          .get();
+
+      final querySnapshot =
+          await _firestore
+              .collection('carbon_footprints')
+              .where('userId', isEqualTo: userId)
+              .get();
 
       if (querySnapshot.docs.isEmpty) return 0.0;
 
-      final footprints = querySnapshot.docs
-          .map((doc) => CarbonFootprint.fromMap(doc.data(), doc.id))
-          .toList();
+      final footprints =
+          querySnapshot.docs
+              .map((doc) => CarbonFootprint.fromMap(doc.data(), doc.id))
+              .where(
+                (footprint) => footprint.date.isAfter(startDate),
+              ) // Filter in app instead
+              .toList();
+
+      if (footprints.isEmpty) return 0.0;
 
       final totalEmissions = footprints.fold<double>(
         0.0,

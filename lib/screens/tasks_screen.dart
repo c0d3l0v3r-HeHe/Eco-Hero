@@ -75,7 +75,7 @@ class _TasksScreenState extends State<TasksScreen> {
         );
       }
     }
-    
+
     // Always stop the loading state, even on error
     if (mounted) {
       setState(() => _isSubmitting = false);
@@ -114,10 +114,7 @@ class _TasksScreenState extends State<TasksScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.green.shade800,
-                      Colors.green.shade700,
-                    ],
+                    colors: [Colors.green.shade800, Colors.green.shade700],
                   ),
                 ),
               ),
@@ -188,22 +185,23 @@ class _TasksScreenState extends State<TasksScreen> {
                             onChanged: (value) {
                               setState(() => _selectedCategory = value!);
                             },
-                            items: _categories.map((category) {
-                              return DropdownMenuItem(
-                                value: category,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _categoryIcons[category],
-                                      color: Colors.green.shade700,
-                                      size: 20,
+                            items:
+                                _categories.map((category) {
+                                  return DropdownMenuItem(
+                                    value: category,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          _categoryIcons[category],
+                                          color: Colors.green.shade700,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(_categoryDisplayNames[category]!),
+                                      ],
                                     ),
-                                    const SizedBox(width: 10),
-                                    Text(_categoryDisplayNames[category]!),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
+                                  );
+                                }).toList(),
                           ),
                         ),
                       ),
@@ -224,13 +222,16 @@ class _TasksScreenState extends State<TasksScreen> {
                         controller: _taskController,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          hintText: 'Describe what you did... (e.g., "Recycled 5 plastic bottles", "Walked to work instead of driving")',
+                          hintText:
+                              'Describe what you did... (e.g., "Recycled 5 plastic bottles", "Walked to work instead of driving")',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.green.shade700),
+                            borderSide: BorderSide(
+                              color: Colors.green.shade700,
+                            ),
                           ),
                         ),
                         validator: (value) {
@@ -259,29 +260,30 @@ class _TasksScreenState extends State<TasksScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.add_task),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Submit Task & Earn Points',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                          child:
+                              _isSubmitting
+                                  ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
                                     ),
-                                  ],
-                                ),
+                                  )
+                                  : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add_task),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Submit Task & Earn Points',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                         ),
                       ),
                     ],
@@ -403,120 +405,122 @@ class _TasksScreenState extends State<TasksScreen> {
               }
 
               return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final task = tasks[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                      child: Container(
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.shade100,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    _categoryIcons[task.category] ?? Icons.eco,
-                                    color: Colors.green.shade700,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _categoryDisplayNames[task.category] ?? task.category,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.green.shade700,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      Text(
-                                        _formatDate(task.completedAt),
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.shade700,
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  child: Text(
-                                    '+${task.pointsEarned} pts',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              task.description,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.stars,
-                                  color: Colors.amber.shade600,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'AI Score: ${task.aiScore.toStringAsFixed(1)}/10',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final task = tasks[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 5,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                  childCount: tasks.length,
-                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  _categoryIcons[task.category] ?? Icons.eco,
+                                  color: Colors.green.shade700,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _categoryDisplayNames[task.category] ??
+                                          task.category,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.green.shade700,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      _formatDate(task.completedAt),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade700,
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Text(
+                                  '+${task.pointsEarned} pts',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            task.description,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.stars,
+                                color: Colors.amber.shade600,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'AI Score: ${task.aiScore.toStringAsFixed(1)}/10',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }, childCount: tasks.length),
               );
             },
           ),
 
           // Bottom padding
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 20),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
         ],
       ),
     );

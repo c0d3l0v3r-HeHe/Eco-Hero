@@ -44,7 +44,9 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Camera initialization failed. You can still use gallery.'),
+            content: Text(
+              'Camera initialization failed. You can still use gallery.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -84,9 +86,9 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
       await _processImage(File(picture.path));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error taking picture: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error taking picture: $e')));
       }
     } finally {
       setState(() => _isProcessing = false);
@@ -109,9 +111,9 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     } finally {
       setState(() => _isProcessing = false);
@@ -125,23 +127,24 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(
-                  'Analyzing waste...',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.green.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
+          builder:
+              (context) => AlertDialog(
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Analyzing waste...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.green.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
         );
       }
 
@@ -170,280 +173,307 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            builder:
+                (context, scrollController) => Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              _getWasteIcon(classification.wasteType),
-                              color: Colors.green.shade700,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Waste Identified',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                                Text(
-                                  classification.classification,
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Image
+                      // Handle bar
                       Container(
-                        height: 180,
-                        width: double.infinity,
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.grey.shade200,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: classification.imageUrl.startsWith('http')
-                              ? Image.network(
-                                  classification.imageUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey.shade200,
-                                      child: Icon(
-                                        Icons.image_not_supported,
-                                        color: Colors.grey.shade400,
-                                        size: 50,
-                                      ),
-                                    );
-                                  },
-                                )
-                              : Image.file(
-                                  File(classification.imageUrl),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey.shade200,
-                                      child: Icon(
-                                        Icons.image_not_supported,
-                                        color: Colors.grey.shade400,
-                                        size: 50,
-                                      ),
-                                    );
-                                  },
-                                ),
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Classification Details
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Waste Type:',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _getWasteColor(classification.wasteType),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  child: Text(
-                                    classification.wasteType.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.shade100,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      _getWasteIcon(classification.wasteType),
+                                      color: Colors.green.shade700,
+                                      size: 24,
                                     ),
                                   ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Waste Identified',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                        Text(
+                                          classification.classification,
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.green.shade700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // Image
+                              Container(
+                                height: 180,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: Colors.grey.shade200,
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Confidence:',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.w600,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child:
+                                      classification.imageUrl.startsWith('http')
+                                          ? Image.network(
+                                            classification.imageUrl,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (
+                                              context,
+                                              error,
+                                              stackTrace,
+                                            ) {
+                                              return Container(
+                                                color: Colors.grey.shade200,
+                                                child: Icon(
+                                                  Icons.image_not_supported,
+                                                  color: Colors.grey.shade400,
+                                                  size: 50,
+                                                ),
+                                              );
+                                            },
+                                          )
+                                          : Image.file(
+                                            File(classification.imageUrl),
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (
+                                              context,
+                                              error,
+                                              stackTrace,
+                                            ) {
+                                              return Container(
+                                                color: Colors.grey.shade200,
+                                                child: Icon(
+                                                  Icons.image_not_supported,
+                                                  color: Colors.grey.shade400,
+                                                  size: 50,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // Classification Details
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Waste Type:',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey.shade700,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: _getWasteColor(
+                                              classification.wasteType,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              15,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            classification.wasteType
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Confidence:',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey.shade700,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.verified,
+                                              color:
+                                                  classification.confidence >
+                                                          0.8
+                                                      ? Colors.green
+                                                      : classification
+                                                              .confidence >
+                                                          0.6
+                                                      ? Colors.orange
+                                                      : Colors.red,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${(classification.confidence * 100).toStringAsFixed(0)}%',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey.shade700,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // Disposal Advice
+                              Text(
+                                'Disposal Instructions',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.blue.shade200,
                                   ),
                                 ),
-                                Row(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Icon(
-                                      Icons.verified,
-                                      color: classification.confidence > 0.8
-                                          ? Colors.green
-                                          : classification.confidence > 0.6
-                                              ? Colors.orange
-                                              : Colors.red,
-                                      size: 16,
+                                      Icons.info_outline,
+                                      color: Colors.blue.shade700,
+                                      size: 20,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${(classification.confidence * 100).toStringAsFixed(0)}%',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey.shade700,
-                                        fontWeight: FontWeight.w600,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        classification.disposalAdvice,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blue.shade700,
+                                          height: 1.4,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Disposal Advice
-                      Text(
-                        'Disposal Instructions',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green.shade700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.blue.shade200),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Colors.blue.shade700,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                classification.disposalAdvice,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.blue.shade700,
-                                  height: 1.4,
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // Close Button
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green.shade700,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Got it!',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Close Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green.shade700,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Got it!',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            ],
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
           ),
-        ),
-      ),
     );
   }
 
@@ -500,203 +530,203 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
-      body: _isInitialized
-          ? Stack(
-              children: [
-                // Camera Preview
-                Positioned.fill(
-                  child: ClipRect(
-                    child: OverflowBox(
-                      alignment: Alignment.center,
-                      child: FittedBox(
-                        fit: BoxFit.fitWidth,
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          height: MediaQuery.of(context).size.width / _cameraController!.value.aspectRatio,
-                          child: CameraPreview(_cameraController!),
+      body:
+          _isInitialized
+              ? Stack(
+                children: [
+                  // Camera Preview
+                  Positioned.fill(
+                    child: ClipRect(
+                      child: OverflowBox(
+                        alignment: Alignment.center,
+                        child: FittedBox(
+                          fit: BoxFit.fitWidth,
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width,
+                            height:
+                                MediaQuery.of(context).size.width /
+                                _cameraController!.value.aspectRatio,
+                            child: CameraPreview(_cameraController!),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                
-                // Overlay
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
+
+                  // Overlay
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                      ),
                     ),
                   ),
-                ),
-                
-                // Scanning Frame
-                Center(
-                  child: Container(
-                    width: 250,
-                    height: 250,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.green.shade400,
-                        width: 3,
+
+                  // Scanning Frame
+                  Center(
+                    child: Container(
+                      width: 250,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.green.shade400,
+                          width: 3,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      child: Stack(
+                        children: [
+                          // Corner indicators
+                          Positioned(
+                            top: -1,
+                            left: -1,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade400,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: -1,
+                            right: -1,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade400,
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -1,
+                            left: -1,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade400,
+                                borderRadius: const BorderRadius.only(
+                                  bottomLeft: Radius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -1,
+                            right: -1,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade400,
+                                borderRadius: const BorderRadius.only(
+                                  bottomRight: Radius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Stack(
+                  ),
+
+                  // Instructions
+                  Positioned(
+                    top: 100,
+                    left: 20,
+                    right: 20,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Position the waste item within the frame and tap the capture button',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Bottom Controls
+                  Positioned(
+                    bottom: 50,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // Corner indicators
-                        Positioned(
-                          top: -1,
-                          left: -1,
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade400,
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(8),
-                              ),
-                            ),
+                        // Gallery Button
+                        FloatingActionButton(
+                          heroTag: "gallery",
+                          onPressed:
+                              _isProcessing ? null : _pickImageFromGallery,
+                          backgroundColor: Colors.white,
+                          child: Icon(
+                            Icons.photo_library,
+                            color: Colors.green.shade700,
                           ),
                         ),
-                        Positioned(
-                          top: -1,
-                          right: -1,
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade400,
-                              borderRadius: const BorderRadius.only(
-                                topRight: Radius.circular(8),
-                              ),
-                            ),
-                          ),
+
+                        // Capture Button
+                        FloatingActionButton.large(
+                          heroTag: "capture",
+                          onPressed: _isProcessing ? null : _takePicture,
+                          backgroundColor: Colors.green.shade700,
+                          child:
+                              _isProcessing
+                                  ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  )
+                                  : const Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
                         ),
-                        Positioned(
-                          bottom: -1,
-                          left: -1,
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade400,
-                              borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -1,
-                          right: -1,
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade400,
-                              borderRadius: const BorderRadius.only(
-                                bottomRight: Radius.circular(8),
-                              ),
-                            ),
+
+                        // Flash Button
+                        FloatingActionButton(
+                          heroTag: "flash",
+                          onPressed: _toggleFlash,
+                          backgroundColor: Colors.white,
+                          child: Icon(
+                            _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                            color: Colors.green.shade700,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                
-                // Instructions
-                Positioned(
-                  top: 100,
-                  left: 20,
-                  right: 20,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'Position the waste item within the frame and tap the capture button',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-                
-                // Bottom Controls
-                Positioned(
-                  bottom: 50,
-                  left: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Gallery Button
-                      FloatingActionButton(
-                        heroTag: "gallery",
-                        onPressed: _isProcessing ? null : _pickImageFromGallery,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.photo_library,
-                          color: Colors.green.shade700,
-                        ),
-                      ),
-                      
-                      // Capture Button
-                      FloatingActionButton.large(
-                        heroTag: "capture",
-                        onPressed: _isProcessing ? null : _takePicture,
-                        backgroundColor: Colors.green.shade700,
-                        child: _isProcessing
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              )
-                            : const Icon(
-                                Icons.camera_alt,
-                                color: Colors.white,
-                                size: 32,
-                              ),
-                      ),
-                      
-                      // Flash Button
-                      FloatingActionButton(
-                        heroTag: "flash",
-                        onPressed: _toggleFlash,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                          color: Colors.green.shade700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            )
-          : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    color: Colors.green.shade700,
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Initializing camera...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
                 ],
+              )
+              : Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: Colors.green.shade700),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Initializing camera...',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ],
+                ),
               ),
-            ),
     );
   }
 }

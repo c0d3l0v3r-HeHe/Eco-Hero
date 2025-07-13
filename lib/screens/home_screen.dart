@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'carbon_calculator_screen.dart';
 import 'news_screen.dart';
 import 'tasks_screen.dart';
 import 'waste_scanner_screen.dart';
 import 'profile_screen.dart';
+import 'leaderboard_screen.dart';
+import 'rewards_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile.dart';
 import '../services/user_service.dart';
@@ -35,95 +38,150 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      drawer: _buildProfileDrawer(),
-      appBar: AppBar(
-        title: const Text(
-          'EcoHero',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        backgroundColor: Colors.green.shade700,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {
-              // TODO: Implement notifications
-            },
-          ),
-          // EnvPoints Display
-          StreamBuilder<UserProfile?>(
-            stream: UserService.getUserProfileStream(),
-            builder: (context, snapshot) {
-              final envPoints = snapshot.data?.envPoints ?? 0;
-              return Container(
-                margin: const EdgeInsets.only(right: 15, top: 12, bottom: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.eco, color: Colors.green.shade700, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      snapshot.hasError ? '0' : '$envPoints',
-                      style: TextStyle(
-                        color: Colors.green.shade700,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+    return PopScope(
+      canPop: _selectedIndex == 0, // Only allow popping when on home tab
+      onPopInvoked: (didPop) {
+        if (!didPop && _selectedIndex != 0) {
+          // If not on home tab and back is pressed, go to home tab
+          setState(() {
+            _selectedIndex = 0;
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        drawer: _buildProfileDrawer(),
+        appBar: AppBar(
+          title: GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const LeaderboardScreen(),
                 ),
               );
             },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.shade300,
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.eco,
+                    color: Colors.green.shade700,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'EcoHero',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      body: _buildBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.green.shade700,
-        unselectedItemColor: Colors.grey.shade600,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_outlined),
-            activeIcon: Icon(Icons.assignment),
-            label: 'Tasks',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.eco_outlined),
-            activeIcon: Icon(Icons.eco),
-            label: 'Carbon',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.delete_outline),
-            activeIcon: Icon(Icons.delete),
-            label: 'Waste',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.article_outlined),
-            activeIcon: Icon(Icons.article),
-            label: 'News',
-          ),
-        ],
-      ),
-    );
+          backgroundColor: Colors.green.shade700,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(
+                Icons.notifications_outlined,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                // TODO: Implement notifications
+              },
+            ),
+            // EnvPoints Display
+            StreamBuilder<UserProfile?>(
+              stream: UserService.getUserProfileStream(),
+              builder: (context, snapshot) {
+                final envPoints = snapshot.data?.envPoints ?? 0;
+                return Container(
+                  margin: const EdgeInsets.only(right: 15, top: 12, bottom: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.eco, color: Colors.green.shade700, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        snapshot.hasError ? '0' : '$envPoints',
+                        style: TextStyle(
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        body: _buildBody(),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: Colors.green.shade700,
+          unselectedItemColor: Colors.grey.shade600,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.assignment_outlined),
+              activeIcon: Icon(Icons.assignment),
+              label: 'Tasks',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.eco_outlined),
+              activeIcon: Icon(Icons.eco),
+              label: 'Carbon',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.delete_outline),
+              activeIcon: Icon(Icons.delete),
+              label: 'Waste',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.article_outlined),
+              activeIcon: Icon(Icons.article),
+              label: 'News',
+            ),
+          ],
+        ),
+      ), // Close PopScope
+    ); // Close build method
   }
 
   Widget _buildBody() {
@@ -368,17 +426,24 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context, snapshot) {
               final userProfile = snapshot.data;
               final user = FirebaseAuth.instance.currentUser;
-              
+
               return GestureDetector(
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
                   );
                 },
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.only(top: 40, left: 20, right: 20, bottom: 20),
+                  padding: const EdgeInsets.only(
+                    top: 40,
+                    left: 20,
+                    right: 20,
+                    bottom: 20,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.green.shade600, Colors.green.shade800],
@@ -395,18 +460,27 @@ class _HomeScreenState extends State<HomeScreen> {
                           CircleAvatar(
                             radius: 35,
                             backgroundColor: Colors.white,
-                            backgroundImage: userProfile?.profileImageUrl != null
-                                ? (userProfile!.profileImageUrl!.startsWith('http') 
-                                    ? NetworkImage(userProfile.profileImageUrl!) as ImageProvider
-                                    : FileImage(File(userProfile.profileImageUrl!)))
-                                : null,
-                            child: userProfile?.profileImageUrl == null
-                                ? Icon(
-                                    Icons.person,
-                                    size: 35,
-                                    color: Colors.green.shade600,
-                                  )
-                                : null,
+                            backgroundImage:
+                                userProfile?.profileImageUrl != null
+                                    ? (userProfile!.profileImageUrl!.startsWith(
+                                          'http',
+                                        )
+                                        ? NetworkImage(
+                                              userProfile.profileImageUrl!,
+                                            )
+                                            as ImageProvider
+                                        : FileImage(
+                                          File(userProfile.profileImageUrl!),
+                                        ))
+                                    : null,
+                            child:
+                                userProfile?.profileImageUrl == null
+                                    ? Icon(
+                                      Icons.person,
+                                      size: 35,
+                                      color: Colors.green.shade600,
+                                    )
+                                    : null,
                           ),
                           const SizedBox(width: 15),
                           Expanded(
@@ -414,7 +488,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  userProfile?.displayName ?? user?.displayName ?? 'EcoHero User',
+                                  userProfile?.displayName ??
+                                      user?.displayName ??
+                                      'EcoHero User',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
@@ -430,7 +506,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(height: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(12),
@@ -438,7 +517,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.eco, color: Colors.white, size: 16),
+                                      const Icon(
+                                        Icons.eco,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
                                         '${userProfile?.envPoints ?? 0} EnvPoints',
@@ -471,7 +554,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.touch_app, color: Colors.white70, size: 16),
+                            Icon(
+                              Icons.touch_app,
+                              color: Colors.white70,
+                              size: 16,
+                            ),
                             SizedBox(width: 6),
                             Text(
                               'Tap to edit profile',
@@ -489,7 +576,7 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          
+
           // Menu items
           Expanded(
             child: Column(
@@ -507,6 +594,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     _showDonateDialog();
                   },
                 ),
+                ListTile(
+                  leading: Icon(
+                    Icons.card_giftcard,
+                    color: Colors.purple.shade400,
+                  ),
+                  title: const Text(
+                    'Rewards',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: const Text('Redeem your EnvPoints'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const RewardsScreen(),
+                      ),
+                    );
+                  },
+                ),
                 const Divider(),
                 const Spacer(),
                 // Logout at bottom
@@ -515,7 +621,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: const Text(
                     'Logout',
                     style: TextStyle(
-                      fontSize: 16, 
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Colors.red,
                     ),
@@ -535,69 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showDonateDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.favorite, color: Colors.pink.shade400),
-              const SizedBox(width: 8),
-              const Text('Donate for Environment'),
-            ],
-          ),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Support environmental initiatives and help make a difference!',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 16),
-              Text(
-                '🌱 Tree planting projects\n'
-                '♻️ Waste management programs\n'
-                '🌊 Ocean cleanup initiatives\n'
-                '⚡ Renewable energy projects',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Coming soon: Integrated donation system',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Donation feature coming soon! 💚'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink.shade400,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Learn More'),
-            ),
-          ],
-        );
-      },
-    );
+    showDialog(context: context, builder: (context) => const DonateDialog());
   }
 
   void _showLogoutConfirmation() {
@@ -650,5 +694,236 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+}
 
+class DonateDialog extends StatefulWidget {
+  const DonateDialog({super.key});
+
+  @override
+  State<DonateDialog> createState() => _DonateDialogState();
+}
+
+class _DonateDialogState extends State<DonateDialog>
+    with TickerProviderStateMixin {
+  late AnimationController _controller;
+  late AnimationController _slideController;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _currentSlideAnimation;
+  late Animation<Offset> _nextSlideAnimation;
+
+  int _currentTextIndex = 0;
+  int _nextTextIndex = 1;
+  final List<String> _texts = [
+    'Help Save Our Planet 🌍',
+    'Support Green Initiatives 🌱',
+    'Fund Ocean Cleanup 🌊',
+    'Plant More Trees 🌳',
+    'Renewable Energy Projects ⚡',
+    'Protect Wildlife 🦋',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+
+    _currentSlideAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(-1.0, 0.0),
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeInOut),
+    );
+
+    _nextSlideAnimation = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeInOut),
+    );
+
+    _controller.forward();
+    _startTextCycle();
+  }
+
+  void _startTextCycle() {
+    Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (mounted) {
+        _slideToNextText();
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _slideToNextText() {
+    _nextTextIndex = (_currentTextIndex + 1) % _texts.length;
+    _slideController.forward().then((_) {
+      setState(() {
+        _currentTextIndex = _nextTextIndex;
+      });
+      _slideController.reset();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            content: SizedBox(
+              width: 300, // Fixed width
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.pink.shade400, Colors.red.shade400],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.favorite,
+                      color: Colors.white,
+                      size: 40,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 60, // Fixed height for text area
+                    child: AnimatedBuilder(
+                      animation: _slideController,
+                      builder: (context, child) {
+                        return Stack(
+                          children: [
+                            // Current text sliding out to the left
+                            if (_slideController.value < 1.0)
+                              SlideTransition(
+                                position: _currentSlideAnimation,
+                                child: Opacity(
+                                  opacity:
+                                      _slideController.value < 0.5 ? 1.0 : 0.0,
+                                  child: Center(
+                                    child: Text(
+                                      _texts[_currentTextIndex],
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            // Next text sliding in from the right
+                            if (_slideController.value > 0.0)
+                              SlideTransition(
+                                position: _nextSlideAnimation,
+                                child: Opacity(
+                                  opacity:
+                                      _slideController.value > 0.5 ? 1.0 : 0.0,
+                                  child: Center(
+                                    child: Text(
+                                      _texts[_nextTextIndex],
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.construction,
+                          color: Colors.amber.shade700,
+                          size: 32,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Coming Soon!',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber.shade800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Sorry for the inconvenience.',
+                          style: TextStyle(color: Colors.amber.shade700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Thank you for your interest! 💚'),
+                      backgroundColor: Colors.green.shade600,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade600,
+                ),
+                child: const Text('Notify Me'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Get current user
@@ -97,17 +97,37 @@ class AuthService {
   // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      print('Starting Google Sign-In process...');
+
+      // Check if Google Sign-In is available
+      if (!await _googleSignIn.isSignedIn()) {
+        await _googleSignIn.signOut(); // Ensure clean state
+      }
+
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      print('Google user: $googleUser');
 
       if (googleUser == null) {
-        // User canceled the sign-in
+        print('User canceled the sign-in');
         return null;
       }
 
+      print('Getting Google authentication details...');
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+
+      print(
+        'Access token: ${googleAuth.accessToken != null ? "Present" : "Missing"}',
+      );
+      print('ID token: ${googleAuth.idToken != null ? "Present" : "Missing"}');
+
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        throw Exception(
+          'Failed to get authentication tokens from Google. Please check your Google Sign-In configuration.',
+        );
+      }
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -115,20 +135,46 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
+      print('Signing in to Firebase with Google credential...');
       // Sign in to Firebase with the Google credential
       final UserCredential result = await _auth.signInWithCredential(
         credential,
       );
 
+      print('Firebase sign-in successful: ${result.user?.email}');
+
       // Create user document in Firestore if it's a new user
       if (result.additionalUserInfo?.isNewUser == true && result.user != null) {
+        print('Creating user document for new user...');
         await _createUserDocument(result.user!);
       }
 
       return result;
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('Error signing in with Google: $e');
-      rethrow;
+      print('Stack trace: $stackTrace');
+
+      // Handle specific Google Sign-In errors with better messages
+      String errorMessage = 'Google Sign-In failed. ';
+
+      if (e.toString().toLowerCase().contains('sign_in_failed') ||
+          e.toString().contains('10:') ||
+          e.toString().toLowerCase().contains('developer_error')) {
+        errorMessage +=
+            'Google Sign-In is not properly configured for this app. Please use email/password login instead.';
+      } else if (e.toString().toLowerCase().contains('network_error') ||
+          e.toString().toLowerCase().contains('network')) {
+        errorMessage += 'Please check your internet connection and try again.';
+      } else if (e.toString().toLowerCase().contains('canceled') ||
+          e.toString().toLowerCase().contains('cancelled')) {
+        errorMessage += 'Sign-in was cancelled.';
+      } else if (e.toString().toLowerCase().contains('timeout')) {
+        errorMessage += 'Sign-in timed out. Please try again.';
+      } else {
+        errorMessage += 'Please try again or use email/password login.';
+      }
+
+      throw Exception(errorMessage);
     }
   }
 

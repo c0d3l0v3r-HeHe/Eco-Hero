@@ -15,7 +15,7 @@ class NewsService {
     if (!AppConfig.hasNewsApiKey) {
       throw Exception('NEWS_API_KEY not found in environment variables');
     }
-    
+
     try {
       final response = await http.get(
         Uri.parse(
@@ -29,9 +29,7 @@ class NewsService {
           'pageSize=$pageSize&'
           'apiKey=$_apiKey',
         ),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
@@ -53,7 +51,7 @@ class NewsService {
     if (!AppConfig.hasNewsApiKey) {
       throw Exception('NEWS_API_KEY not found in environment variables');
     }
-    
+
     try {
       final response = await http.get(
         Uri.parse(
@@ -63,9 +61,7 @@ class NewsService {
           'pageSize=$pageSize&'
           'apiKey=$_apiKey',
         ),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
@@ -88,7 +84,7 @@ class NewsService {
     if (!AppConfig.hasNewsApiKey) {
       throw Exception('NEWS_API_KEY not found in environment variables');
     }
-    
+
     try {
       final response = await http.get(
         Uri.parse(
@@ -100,9 +96,7 @@ class NewsService {
           'pageSize=$pageSize&'
           'apiKey=$_apiKey',
         ),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
@@ -121,18 +115,19 @@ class AIService {
   // For AI summarization, I recommend using Google's Gemini API
   // It's more cost-effective and performs better for summarization tasks
   // You can get a free API key from: https://makersuite.google.com/app/apikey
-  
+
   static String get _geminiApiKey => AppConfig.geminiApiKey;
-  static const String _geminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+  static const String _geminiBaseUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
   /// Summarize article using Gemini AI
   Future<String> summarizeArticle(NewsArticle article) async {
     if (!AppConfig.hasGeminiApiKey) {
       // Return a placeholder summary if API key is not set
       return 'AI Summary: This article discusses ${article.title.toLowerCase()}. '
-             'The content covers environmental topics and sustainability initiatives. '
-             'Published by ${article.source} on ${_formatDate(article.publishedAt)}. '
-             'Key points include environmental protection, climate action, and green technology developments.';
+          'The content covers environmental topics and sustainability initiatives. '
+          'Published by ${article.source} on ${_formatDate(article.publishedAt)}. '
+          'Key points include environmental protection, climate action, and green technology developments.';
     }
 
     try {
@@ -141,32 +136,29 @@ class AIService {
           {
             'parts': [
               {
-                'text': 'Please provide a concise summary (2-3 sentences) of this environmental news article. '
-                       'Focus on the key environmental impact, actions being taken, and significance:\n\n'
-                       'Title: ${article.title}\n'
-                       'Content: ${article.description}\n'
-                       '${article.content.isNotEmpty ? article.content : ""}'
-              }
-            ]
-          }
+                'text':
+                    'Please provide a concise summary (2-3 sentences) of this environmental news article. '
+                    'Focus on the key environmental impact, actions being taken, and significance:\n\n'
+                    'Title: ${article.title}\n'
+                    'Content: ${article.description}\n'
+                    '${article.content.isNotEmpty ? article.content : ""}',
+              },
+            ],
+          },
         ],
-        'generationConfig': {
-          'temperature': 0.3,
-          'maxOutputTokens': 150,
-        }
+        'generationConfig': {'temperature': 0.3, 'maxOutputTokens': 150},
       };
 
       final response = await http.post(
         Uri.parse('$_geminiBaseUrl?key=$_geminiApiKey'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final summary = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+        final summary =
+            data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
         return summary.isNotEmpty ? summary : _generateFallbackSummary(article);
       } else {
         return _generateFallbackSummary(article);
@@ -179,8 +171,8 @@ class AIService {
   String _generateFallbackSummary(NewsArticle article) {
     final date = _formatDate(article.publishedAt);
     return 'Summary: ${article.title} - This environmental news article from ${article.source} '
-           'published on $date discusses important sustainability and climate-related topics. '
-           '${article.description.isNotEmpty ? article.description.substring(0, article.description.length > 100 ? 100 : article.description.length) + "..." : ""}';
+        'published on $date discusses important sustainability and climate-related topics. '
+        '${article.description.isNotEmpty ? "${article.description.substring(0, article.description.length > 100 ? 100 : article.description.length)}..." : ""}';
   }
 
   String _formatDate(DateTime date) {

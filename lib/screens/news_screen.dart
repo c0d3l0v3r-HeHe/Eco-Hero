@@ -4,7 +4,7 @@ import '../models/news_article.dart';
 import '../services/news_service.dart';
 
 class NewsScreen extends StatefulWidget {
-  const NewsScreen({Key? key}) : super(key: key);
+  const NewsScreen({super.key});
 
   @override
   State<NewsScreen> createState() => _NewsScreenState();
@@ -13,15 +13,15 @@ class NewsScreen extends StatefulWidget {
 class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
   final NewsService _newsService = NewsService();
   final AIService _aiService = AIService();
-  
+
   List<NewsArticle> _articles = [];
   bool _isLoading = true;
   String _error = '';
   String _selectedCategory = 'latest';
   final TextEditingController _searchController = TextEditingController();
-  
+
   late TabController _tabController;
-  
+
   final Map<String, String> _categories = {
     'latest': 'Latest News',
     'headlines': 'Top Headlines',
@@ -52,19 +52,25 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
 
     try {
       NewsResponse response;
-      
+
       switch (_selectedCategory) {
         case 'headlines':
           response = await _newsService.getTopEnvironmentalHeadlines();
           break;
         case 'climate':
-          response = await _newsService.searchEnvironmentalNews(query: 'climate change');
+          response = await _newsService.searchEnvironmentalNews(
+            query: 'climate change',
+          );
           break;
         case 'renewable':
-          response = await _newsService.searchEnvironmentalNews(query: 'renewable energy');
+          response = await _newsService.searchEnvironmentalNews(
+            query: 'renewable energy',
+          );
           break;
         case 'conservation':
-          response = await _newsService.searchEnvironmentalNews(query: 'conservation wildlife');
+          response = await _newsService.searchEnvironmentalNews(
+            query: 'conservation wildlife',
+          );
           break;
         default:
           response = await _newsService.getEnvironmentalNews();
@@ -128,20 +134,24 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
             _selectedCategory = _categories.keys.elementAt(index);
             _loadNews();
           },
-          tabs: _categories.values.map((category) => Tab(text: category)).toList(),
+          tabs:
+              _categories.values
+                  .map((category) => Tab(text: category))
+                  .toList(),
         ),
       ),
       body: Column(
         children: [
           _buildSearchBar(),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _error.isNotEmpty
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error.isNotEmpty
                     ? _buildErrorWidget()
                     : _articles.isEmpty
-                        ? _buildEmptyWidget()
-                        : _buildNewsList(),
+                    ? _buildEmptyWidget()
+                    : _buildNewsList(),
           ),
         ],
       ),
@@ -156,18 +166,17 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
         decoration: InputDecoration(
           hintText: 'Search environmental news...',
           prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    _loadNews();
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          suffixIcon:
+              _searchController.text.isNotEmpty
+                  ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      _loadNews();
+                    },
+                  )
+                  : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.green.shade600, width: 2),
@@ -214,7 +223,9 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
           // Image
           if (article.urlToImage != null && article.urlToImage!.isNotEmpty)
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               child: Image.network(
                 article.urlToImage!,
                 height: 200,
@@ -231,7 +242,7 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
                 },
               ),
             ),
-          
+
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -241,7 +252,10 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green.shade100,
                         borderRadius: BorderRadius.circular(12),
@@ -265,9 +279,9 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Title
                 Text(
                   article.title,
@@ -279,9 +293,9 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Description
                 if (article.description.isNotEmpty)
                   Text(
@@ -294,9 +308,9 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Action buttons
                 Row(
                   children: [
@@ -357,10 +371,7 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadNews,
-            child: const Text('Try Again'),
-          ),
+          ElevatedButton(onPressed: _loadNews, child: const Text('Try Again')),
         ],
       ),
     );
@@ -391,83 +402,82 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('Generating AI Summary...'),
-          ],
-        ),
-      ),
+      builder:
+          (context) => const AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Generating AI Summary...'),
+              ],
+            ),
+          ),
     );
 
     try {
       final summary = await _aiService.summarizeArticle(article);
       Navigator.pop(context); // Close loading dialog
-      
+
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.auto_awesome, color: Colors.blue.shade600),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'AI Summary',
-                  style: TextStyle(fontSize: 18),
+        builder:
+            (context) => AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: Colors.blue.shade600),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text('AI Summary', style: TextStyle(fontSize: 18)),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Text(
+                        summary,
+                        style: const TextStyle(fontSize: 14, height: 1.5),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Original Article: ${article.title}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
-                  child: Text(
-                    summary,
-                    style: const TextStyle(fontSize: 14, height: 1.5),
-                  ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Original Article: ${article.title}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey,
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _launchURL(article.url);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade600,
+                    foregroundColor: Colors.white,
                   ),
+                  child: const Text('Read Full Article'),
                 ),
               ],
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _launchURL(article.url);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade600,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Read Full Article'),
-            ),
-          ],
-        ),
       );
     } catch (e) {
       Navigator.pop(context); // Close loading dialog
@@ -495,7 +505,7 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inHours < 1) {
       return '${difference.inMinutes}m ago';
     } else if (difference.inHours < 24) {

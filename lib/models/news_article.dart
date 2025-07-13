@@ -27,7 +27,8 @@ class NewsArticle {
       url: json['url'] ?? '',
       urlToImage: json['urlToImage'],
       author: json['author'] ?? 'Unknown Author',
-      publishedAt: DateTime.tryParse(json['publishedAt'] ?? '') ?? DateTime.now(),
+      publishedAt:
+          DateTime.tryParse(json['publishedAt'] ?? '') ?? DateTime.now(),
       source: json['source']['name'] ?? 'Unknown Source',
     );
   }
@@ -61,9 +62,11 @@ class NewsResponse {
     return NewsResponse(
       status: json['status'] ?? '',
       totalResults: json['totalResults'] ?? 0,
-      articles: (json['articles'] as List<dynamic>?)
-          ?.map((article) => NewsArticle.fromJson(article))
-          .toList() ?? [],
+      articles:
+          (json['articles'] as List<dynamic>?)
+              ?.map((article) => NewsArticle.fromJson(article))
+              .toList() ??
+          [],
     );
   }
 }

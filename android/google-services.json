@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "985115185980-ik1e3l5k2a8bavt94mkco67rj1h2l412.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.c0d3l0v3r.eco_hero_app",
+            "certificate_hash": "1fce053e70aa3db94da10a37a07ef6a2cf2fbe14"
+          }
+        },
+        {
           "client_id": "985115185980-trtontftmfqd9qm16plcetg3p3rh1e2s.apps.googleusercontent.com",
           "client_type": 3
         }

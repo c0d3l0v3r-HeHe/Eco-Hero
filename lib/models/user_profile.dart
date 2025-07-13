@@ -5,6 +5,8 @@ class UserProfile {
   final String email;
   final String displayName;
   final String? profileImageUrl;
+  final String? bio;
+  final bool isPublic;
   final int envPoints;
   final DateTime createdAt;
   final DateTime lastUpdated;
@@ -14,6 +16,8 @@ class UserProfile {
     required this.email,
     required this.displayName,
     this.profileImageUrl,
+    this.bio,
+    this.isPublic = true,
     this.envPoints = 0,
     required this.createdAt,
     required this.lastUpdated,
@@ -25,13 +29,17 @@ class UserProfile {
       email: json['email'] ?? '',
       displayName: json['displayName'] ?? '',
       profileImageUrl: json['profileImageUrl'],
+      bio: json['bio'],
+      isPublic: json['isPublic'] ?? true,
       envPoints: json['envPoints'] ?? 0,
-      createdAt: json['createdAt'] != null 
-          ? (json['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
-      lastUpdated: json['lastUpdated'] != null 
-          ? (json['lastUpdated'] as Timestamp).toDate()
-          : DateTime.now(),
+      createdAt:
+          json['createdAt'] != null
+              ? (json['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
+      lastUpdated:
+          json['lastUpdated'] != null
+              ? (json['lastUpdated'] as Timestamp).toDate()
+              : DateTime.now(),
     );
   }
 
@@ -41,6 +49,8 @@ class UserProfile {
       'email': email,
       'displayName': displayName,
       'profileImageUrl': profileImageUrl,
+      'bio': bio,
+      'isPublic': isPublic,
       'envPoints': envPoints,
       'createdAt': Timestamp.fromDate(createdAt),
       'lastUpdated': Timestamp.fromDate(lastUpdated),
@@ -52,6 +62,8 @@ class UserProfile {
     String? email,
     String? displayName,
     String? profileImageUrl,
+    String? bio,
+    bool? isPublic,
     int? envPoints,
     DateTime? createdAt,
     DateTime? lastUpdated,
@@ -61,6 +73,8 @@ class UserProfile {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      bio: bio ?? this.bio,
+      isPublic: isPublic ?? this.isPublic,
       envPoints: envPoints ?? this.envPoints,
       createdAt: createdAt ?? this.createdAt,
       lastUpdated: lastUpdated ?? this.lastUpdated,
@@ -72,7 +86,8 @@ class EcoTask {
   final String id;
   final String userId;
   final String description;
-  final String category; // e.g., 'recycling', 'energy', 'transportation', 'water'
+  final String
+  category; // e.g., 'recycling', 'energy', 'transportation', 'water'
   final int pointsEarned;
   final double aiScore; // 0-10 rating from AI
   final DateTime completedAt;
@@ -97,9 +112,10 @@ class EcoTask {
       category: json['category'] ?? '',
       pointsEarned: json['pointsEarned'] ?? 0,
       aiScore: (json['aiScore'] ?? 0.0).toDouble(),
-      completedAt: json['completedAt'] != null 
-          ? (json['completedAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      completedAt:
+          json['completedAt'] != null
+              ? (json['completedAt'] as Timestamp).toDate()
+              : DateTime.now(),
       imageUrl: json['imageUrl'],
     );
   }
@@ -123,7 +139,8 @@ class WasteClassification {
   final String userId;
   final String imageUrl;
   final String classification;
-  final String wasteType; // e.g., 'plastic', 'paper', 'glass', 'organic', 'electronic'
+  final String
+  wasteType; // e.g., 'plastic', 'paper', 'glass', 'organic', 'electronic'
   final String disposalAdvice;
   final double confidence;
   final DateTime createdAt;
@@ -148,9 +165,10 @@ class WasteClassification {
       wasteType: json['wasteType'] ?? '',
       disposalAdvice: json['disposalAdvice'] ?? '',
       confidence: (json['confidence'] ?? 0.0).toDouble(),
-      createdAt: json['createdAt'] != null 
-          ? (json['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      createdAt:
+          json['createdAt'] != null
+              ? (json['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
     );
   }
 
