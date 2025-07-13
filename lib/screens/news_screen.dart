@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/news_article.dart';
 import '../services/news_service.dart';
+import '../services/theme_service.dart';
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
@@ -13,6 +14,7 @@ class NewsScreen extends StatefulWidget {
 class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
   final NewsService _newsService = NewsService();
   final AIService _aiService = AIService();
+  final ThemeService _themeService = ThemeService();
 
   List<NewsArticle> _articles = [];
   bool _isLoading = true;
@@ -115,46 +117,53 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.green.shade50,
-      appBar: AppBar(
-        title: const Text(
-          'Environmental News',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.green.shade600,
-        foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          onTap: (index) {
-            _selectedCategory = _categories.keys.elementAt(index);
-            _loadNews();
-          },
-          tabs:
-              _categories.values
+    return ListenableBuilder(
+      listenable: _themeService,
+      builder: (context, child) {
+        final isGrassTheme = _themeService.isGrassTheme;
+        final mainColor = isGrassTheme ? Colors.green : Colors.blue;
+
+        return Scaffold(
+          backgroundColor:
+              isGrassTheme ? Colors.green.shade50 : Colors.blue.shade50,
+          appBar: AppBar(
+            title: const Text(
+              'Environmental News',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: mainColor.shade600,
+            foregroundColor: Colors.white,
+            bottom: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              indicatorColor: Colors.white,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              onTap: (index) {
+                _selectedCategory = _categories.keys.elementAt(index);
+                _loadNews();
+              },
+              tabs: _categories.values
                   .map((category) => Tab(text: category))
                   .toList(),
-        ),
-      ),
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          Expanded(
-            child:
-                _isLoading
+            ),
+          ),
+          body: Column(
+            children: [
+              _buildSearchBar(),
+              Expanded(
+                child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _error.isNotEmpty
-                    ? _buildErrorWidget()
-                    : _articles.isEmpty
-                    ? _buildEmptyWidget()
-                    : _buildNewsList(),
+                        ? _buildErrorWidget()
+                        : _articles.isEmpty
+                            ? _buildEmptyWidget()
+                            : _buildNewsList(),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -166,16 +175,15 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
         decoration: InputDecoration(
           hintText: 'Search environmental news...',
           prefixIcon: const Icon(Icons.search),
-          suffixIcon:
-              _searchController.text.isNotEmpty
-                  ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                      _loadNews();
-                    },
-                  )
-                  : null,
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    _loadNews();
+                  },
+                )
+              : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -402,16 +410,15 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder:
-          (context) => const AlertDialog(
-            content: Row(
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 16),
-                Text('Generating AI Summary...'),
-              ],
-            ),
-          ),
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('Generating AI Summary...'),
+          ],
+        ),
+      ),
     );
 
     try {
@@ -420,64 +427,63 @@ class _NewsScreenState extends State<NewsScreen> with TickerProviderStateMixin {
 
       showDialog(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              title: Row(
-                children: [
-                  Icon(Icons.auto_awesome, color: Colors.blue.shade600),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text('AI Summary', style: TextStyle(fontSize: 18)),
-                  ),
-                ],
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.auto_awesome, color: Colors.blue.shade600),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('AI Summary', style: TextStyle(fontSize: 18)),
               ),
-              content: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blue.shade200),
-                      ),
-                      child: Text(
-                        summary,
-                        style: const TextStyle(fontSize: 14, height: 1.5),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Original Article: ${article.title}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _launchURL(article.url);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade600,
-                    foregroundColor: Colors.white,
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
                   ),
-                  child: const Text('Read Full Article'),
+                  child: Text(
+                    summary,
+                    style: const TextStyle(fontSize: 14, height: 1.5),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Original Article: ${article.title}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey,
+                  ),
                 ),
               ],
             ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _launchURL(article.url);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Read Full Article'),
+            ),
+          ],
+        ),
       );
     } catch (e) {
       Navigator.pop(context); // Close loading dialog

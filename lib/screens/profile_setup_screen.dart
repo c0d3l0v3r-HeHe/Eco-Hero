@@ -76,47 +76,46 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
 
     showModalBottomSheet(
       context: context,
-      builder:
-          (context) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.camera_alt),
-                  title: const Text('Take Photo'),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final image = await picker.pickImage(
-                      source: ImageSource.camera,
-                    );
-                    if (image != null) {
-                      setState(() {
-                        _selectedImage = File(image.path);
-                        _skipImageSelection = false;
-                      });
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Choose from Gallery'),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final image = await picker.pickImage(
-                      source: ImageSource.gallery,
-                    );
-                    if (image != null) {
-                      setState(() {
-                        _selectedImage = File(image.path);
-                        _skipImageSelection = false;
-                      });
-                    }
-                  },
-                ),
-              ],
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Photo'),
+              onTap: () async {
+                Navigator.pop(context);
+                final image = await picker.pickImage(
+                  source: ImageSource.camera,
+                );
+                if (image != null) {
+                  setState(() {
+                    _selectedImage = File(image.path);
+                    _skipImageSelection = false;
+                  });
+                }
+              },
             ),
-          ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () async {
+                Navigator.pop(context);
+                final image = await picker.pickImage(
+                  source: ImageSource.gallery,
+                );
+                if (image != null) {
+                  setState(() {
+                    _selectedImage = File(image.path);
+                    _skipImageSelection = false;
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -148,10 +147,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
       await UserService.createOrUpdateUserProfile(
         displayName: _nameController.text.trim(),
         profileImageUrl: profileImageUrl,
-        bio:
-            _bioController.text.trim().isEmpty
-                ? null
-                : _bioController.text.trim(),
+        bio: _bioController.text.trim().isEmpty
+            ? null
+            : _bioController.text.trim(),
         isPublic: _isPublicProfile,
       );
 
@@ -180,60 +178,57 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.lightbulb, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Name Suggestions'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'How about trying one of these eco-friendly names?',
+              style: TextStyle(fontSize: 16),
             ),
-            title: const Row(
-              children: [
-                Icon(Icons.lightbulb, color: Colors.amber),
-                SizedBox(width: 8),
-                Text('Name Suggestions'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'How about trying one of these eco-friendly names?',
-                  style: TextStyle(fontSize: 16),
+            const SizedBox(height: 16),
+            ...suggestions.map(
+              (name) => Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 8),
+                child: OutlinedButton(
+                  onPressed: () {
+                    _nameController.text = name;
+                    Navigator.pop(context);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.green.shade300),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    name,
+                    style: TextStyle(color: Colors.green.shade700),
+                  ),
                 ),
-                const SizedBox(height: 16),
-                ...suggestions
-                    .map(
-                      (name) => Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: OutlinedButton(
-                          onPressed: () {
-                            _nameController.text = name;
-                            Navigator.pop(context);
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.green.shade300),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            name,
-                            style: TextStyle(color: Colors.green.shade700),
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('I\'ll choose my own'),
               ),
-            ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('I\'ll choose my own'),
           ),
+        ],
+      ),
     );
   }
 
@@ -319,7 +314,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
                           ),
                         ),
                         const SizedBox(height: 16),
-
                         GestureDetector(
                           onTap: _pickImage,
                           child: Container(
@@ -340,43 +334,40 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
                                 ),
                               ],
                             ),
-                            child:
-                                _selectedImage != null
-                                    ? ClipOval(
-                                      child: Image.file(
-                                        _selectedImage!,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                    : !_skipImageSelection &&
+                            child: _selectedImage != null
+                                ? ClipOval(
+                                    child: Image.file(
+                                      _selectedImage!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : !_skipImageSelection &&
                                         widget.googlePhotoUrl != null
                                     ? ClipOval(
-                                      child: Image.network(
-                                        widget.googlePhotoUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          return Icon(
-                                            Icons.add_a_photo,
-                                            size: 40,
-                                            color: Colors.grey.shade500,
-                                          );
-                                        },
-                                      ),
-                                    )
+                                        child: Image.network(
+                                          widget.googlePhotoUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            return Icon(
+                                              Icons.add_a_photo,
+                                              size: 40,
+                                              color: Colors.grey.shade500,
+                                            );
+                                          },
+                                        ),
+                                      )
                                     : Icon(
-                                      Icons.add_a_photo,
-                                      size: 40,
-                                      color: Colors.grey.shade500,
-                                    ),
+                                        Icons.add_a_photo,
+                                        size: 40,
+                                        color: Colors.grey.shade500,
+                                      ),
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
                         TextButton(
                           onPressed: () {
                             setState(() {
@@ -417,7 +408,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
                         if (!ContentFilterService.isDisplayNameAppropriate(
                           value!,
                         )) {
-                          return ContentFilterService.getDisplayNameErrorMessage();
+                          return ContentFilterService
+                              .getDisplayNameErrorMessage();
                         }
                         return null;
                       },
@@ -494,23 +486,22 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen>
                           ),
                           elevation: 5,
                         ),
-                        child:
-                            _isLoading
-                                ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                                : const Text(
-                                  'Complete Setup',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
                                 ),
+                              )
+                            : const Text(
+                                'Complete Setup',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],

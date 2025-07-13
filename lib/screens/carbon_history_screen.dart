@@ -25,28 +25,44 @@ class _CarbonHistoryScreenState extends State<CarbonHistoryScreen> {
   Future<void> _loadCarbonHistory() async {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
-      if (userId.isEmpty) return;
+      if (userId.isEmpty) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
 
       final history = await _calculatorService.getUserCarbonHistory(userId);
       final average = await _calculatorService.getAverageDailyCarbonFootprint(
         userId,
       );
 
-      setState(() {
-        _history = history;
-        _averageFootprint = average;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _history = history;
+          _averageFootprint = average;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading history: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      debugPrint('Error loading carbon history: $e');
+      if (mounted) {
+        setState(() {
+          _history = [];
+          _averageFootprint = 0.0;
+          _isLoading = false;
+        });
+        // Don't show error snackbar for Firestore index issues
+        if (!e.toString().contains('failed-precondition') &&
+            !e.toString().contains('index')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading history: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 

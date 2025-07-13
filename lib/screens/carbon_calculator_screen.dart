@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/carbon_footprint.dart';
 import '../services/carbon_calculator_service.dart';
+import '../services/theme_service.dart';
 import 'carbon_history_screen.dart';
 
 class CarbonCalculatorScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final CarbonCalculatorService _calculatorService = CarbonCalculatorService();
+  final ThemeService _themeService = ThemeService();
 
   // Form controllers
   final _transportationFormKey = GlobalKey<FormState>();
@@ -78,95 +80,117 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.green.shade50,
-      appBar: AppBar(
-        title: const Text(
-          'Carbon Calculator',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.green.shade600,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CarbonHistoryScreen(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.history),
-            tooltip: 'View History',
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(icon: Icon(Icons.directions_car), text: 'Transport'),
-            Tab(icon: Icon(Icons.bolt), text: 'Energy'),
-            Tab(icon: Icon(Icons.restaurant), text: 'Food'),
-            Tab(icon: Icon(Icons.delete), text: 'Waste'),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: TabBarView(
+    return ListenableBuilder(
+      listenable: _themeService,
+      builder: (context, child) {
+        final isGrassTheme = _themeService.isGrassTheme;
+        final mainColor = isGrassTheme ? Colors.green : Colors.blue;
+
+        return Scaffold(
+          backgroundColor:
+              isGrassTheme ? Colors.green.shade50 : Colors.blue.shade50,
+          appBar: AppBar(
+            title: const Text(
+              'Carbon Calculator',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: mainColor.shade600,
+            foregroundColor: Colors.white,
+            actions: [
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CarbonHistoryScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.history),
+                tooltip: 'View History',
+              ),
+            ],
+            bottom: TabBar(
               controller: _tabController,
-              children: [
-                _buildTransportationTab(),
-                _buildEnergyTab(),
-                _buildFoodTab(),
-                _buildWasteTab(),
+              indicatorColor: Colors.white,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              tabs: const [
+                Tab(icon: Icon(Icons.directions_car), text: 'Transport'),
+                Tab(icon: Icon(Icons.bolt), text: 'Energy'),
+                Tab(icon: Icon(Icons.restaurant), text: 'Food'),
+                Tab(icon: Icon(Icons.delete), text: 'Waste'),
               ],
             ),
           ),
-          _buildCalculateButton(),
-        ],
-      ),
+          body: Column(
+            children: [
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildTransportationTab(mainColor),
+                    _buildEnergyTab(mainColor),
+                    _buildFoodTab(mainColor),
+                    _buildWasteTab(mainColor),
+                  ],
+                ),
+              ),
+              _buildCalculateButton(mainColor),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildTransportationTab() {
+  Widget _buildTransportationTab(MaterialColor mainColor) {
     return Form(
       key: _transportationFormKey,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildSectionHeader('🚗 Transportation', 'Track your daily travel'),
+          _buildSectionHeader(
+            '🚗 Transportation',
+            'Track your daily travel',
+            mainColor,
+          ),
           _buildNumberField(
             _carKmController,
             'Car/Motorcycle (km)',
             Icons.directions_car,
+            mainColor,
           ),
           _buildNumberField(
             _bikeKmController,
             'Bicycle (km)',
             Icons.directions_bike,
+            mainColor,
           ),
           _buildNumberField(
             _walkKmController,
             'Walking (km)',
             Icons.directions_walk,
+            mainColor,
           ),
           _buildNumberField(
             _publicTransportKmController,
             'Public Transport (km)',
             Icons.train,
+            mainColor,
           ),
-          _buildNumberField(_flightKmController, 'Flight (km)', Icons.flight),
+          _buildNumberField(
+            _flightKmController,
+            'Flight (km)',
+            Icons.flight,
+            mainColor,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEnergyTab() {
+  Widget _buildEnergyTab(MaterialColor mainColor) {
     return Form(
       key: _energyFormKey,
       child: ListView(
@@ -175,28 +199,32 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
           _buildSectionHeader(
             '⚡ Energy Usage',
             'Your daily energy consumption',
+            mainColor,
           ),
           _buildNumberField(
             _electricityController,
             'Electricity (kWh)',
             Icons.bolt,
+            mainColor,
           ),
           _buildNumberField(
             _gasController,
             'Natural Gas (kWh)',
             Icons.local_fire_department,
+            mainColor,
           ),
           _buildNumberField(
             _heatingOilController,
             'Heating Oil (liters)',
             Icons.oil_barrel,
+            mainColor,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFoodTab() {
+  Widget _buildFoodTab(MaterialColor mainColor) {
     return Form(
       key: _foodFormKey,
       child: ListView(
@@ -205,33 +233,38 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
           _buildSectionHeader(
             '🍽️ Food Consumption',
             'Your daily food choices',
+            mainColor,
           ),
           _buildNumberField(
             _meatMealsController,
             'Meat Meals',
             Icons.restaurant,
+            mainColor,
           ),
           _buildNumberField(
             _vegetarianMealsController,
             'Vegetarian Meals',
             Icons.eco,
+            mainColor,
           ),
           _buildNumberField(
             _localFoodController,
             'Local Food (kg)',
             Icons.agriculture,
+            mainColor,
           ),
           _buildNumberField(
             _processedFoodController,
             'Processed Food (kg)',
             Icons.inventory,
+            mainColor,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildWasteTab() {
+  Widget _buildWasteTab(MaterialColor mainColor) {
     return Form(
       key: _wasteFormKey,
       child: ListView(
@@ -240,28 +273,36 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
           _buildSectionHeader(
             '🗑️ Waste Production',
             'Your daily waste output',
+            mainColor,
           ),
           _buildNumberField(
             _recycledWasteController,
             'Recycled Waste (kg)',
             Icons.recycling,
+            mainColor,
           ),
           _buildNumberField(
             _generalWasteController,
             'General Waste (kg)',
             Icons.delete,
+            mainColor,
           ),
           _buildNumberField(
             _compostWasteController,
             'Compost Waste (kg)',
             Icons.compost,
+            mainColor,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, String subtitle) {
+  Widget _buildSectionHeader(
+    String title,
+    String subtitle,
+    MaterialColor mainColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -269,10 +310,10 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.green,
+              color: mainColor,
             ),
           ),
           Text(
@@ -288,6 +329,7 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
     TextEditingController controller,
     String label,
     IconData icon,
+    MaterialColor mainColor,
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -296,11 +338,11 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: Colors.green.shade600),
+          prefixIcon: Icon(icon, color: mainColor.shade600),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.green.shade600, width: 2),
+            borderSide: BorderSide(color: mainColor.shade600, width: 2),
           ),
           filled: true,
           fillColor: Colors.white,
@@ -320,14 +362,14 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
     );
   }
 
-  Widget _buildCalculateButton() {
+  Widget _buildCalculateButton(MaterialColor mainColor) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       child: ElevatedButton(
         onPressed: _isCalculating ? null : _calculateCarbonFootprint,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green.shade600,
+          backgroundColor: mainColor.shade600,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -352,7 +394,7 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
     );
   }
 
-  void _showResultBottomSheet() {
+  void _showResultBottomSheet(MaterialColor mainColor) {
     if (_calculationResult == null) return;
 
     final result = _calculationResult!;
@@ -396,7 +438,7 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
                               children: [
                                 Icon(
                                   Icons.eco,
-                                  color: Colors.green.shade600,
+                                  color: mainColor.shade600,
                                   size: 28,
                                 ),
                                 const SizedBox(width: 8),
@@ -413,14 +455,28 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
                             _buildEmissionItem(
                               '🚗 Transportation',
                               result.transportation,
+                              mainColor,
                             ),
-                            _buildEmissionItem('⚡ Energy', result.energy),
-                            _buildEmissionItem('🍽️ Food', result.food),
-                            _buildEmissionItem('🗑️ Waste', result.waste),
+                            _buildEmissionItem(
+                              '⚡ Energy',
+                              result.energy,
+                              mainColor,
+                            ),
+                            _buildEmissionItem(
+                              '🍽️ Food',
+                              result.food,
+                              mainColor,
+                            ),
+                            _buildEmissionItem(
+                              '🗑️ Waste',
+                              result.waste,
+                              mainColor,
+                            ),
                             const Divider(thickness: 2),
                             _buildEmissionItem(
                               '🌍 Total Daily Emissions',
                               result.total,
+                              mainColor,
                               isTotal: true,
                             ),
                             const SizedBox(height: 16),
@@ -429,7 +485,7 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.green.shade700,
+                                color: mainColor.shade700,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -472,7 +528,7 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
                                       ); // Close modal after saving
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green.shade600,
+                                      backgroundColor: mainColor.shade600,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
@@ -500,7 +556,8 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
 
   Widget _buildEmissionItem(
     String label,
-    double value, {
+    double value,
+    MaterialColor mainColor, {
     bool isTotal = false,
   }) {
     return Padding(
@@ -520,7 +577,7 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
             style: TextStyle(
               fontSize: isTotal ? 16 : 14,
               fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              color: isTotal ? Colors.green.shade700 : Colors.grey.shade700,
+              color: isTotal ? mainColor.shade700 : Colors.grey.shade700,
             ),
           ),
         ],
@@ -579,7 +636,9 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
       });
 
       // Show result in a modal bottom sheet
-      _showResultBottomSheet();
+      _showResultBottomSheet(
+        _themeService.isGrassTheme ? Colors.green : Colors.blue,
+      );
     } catch (e) {
       setState(() {
         _isCalculating = false;
@@ -600,9 +659,10 @@ class _CarbonCalculatorScreenState extends State<CarbonCalculatorScreen>
       await _calculatorService.saveCarbonFootprint(_calculationResult!);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Carbon footprint saved successfully!'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: const Text('Carbon footprint saved successfully!'),
+          backgroundColor:
+              _themeService.isGrassTheme ? Colors.green : Colors.blue,
         ),
       );
     } catch (e) {

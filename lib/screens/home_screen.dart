@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'carbon_calculator_screen.dart';
-import 'news_screen.dart';
+import 'news_screen_enhanced.dart';
 import 'tasks_screen.dart';
-import 'waste_scanner_screen.dart';
+import 'waste_scanner_screen_enhanced.dart';
 import 'profile_screen.dart';
 import 'leaderboard_screen.dart';
 import 'rewards_screen.dart';
+import 'settings_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile.dart';
 import '../services/user_service.dart';
+import '../services/theme_service.dart';
+import '../models/app_theme.dart';
+import '../widgets/animated_grass_background.dart';
+import '../widgets/animated_marine_background.dart';
+import '../widgets/animated_vine_background.dart';
 import 'dart:io';
 
 class HomeScreen extends StatefulWidget {
@@ -19,13 +25,68 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
+  final ThemeService _themeService = ThemeService();
+  late AnimationController _welcomeController;
+  late AnimationController _contentController;
+  late AnimationController _pageTransitionController;
+  late Animation<Offset> _contentSlideAnimation;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    _initializeAnimations();
     _initializeUserProfile();
+    _initializeTheme();
+  }
+
+  void _initializeAnimations() {
+    // Welcome message animation
+    _welcomeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    // Content animation (slides up from bottom)
+    _contentController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _contentSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    // Page transition animation
+    _pageTransitionController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeIn),
+    );
+
+    // Start animations immediately when app opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _selectedIndex == 0) {
+        // Start animations immediately so content appears
+        _welcomeController.forward();
+        _contentController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _welcomeController.dispose();
+    _contentController.dispose();
+    _pageTransitionController.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeUserProfile() async {
@@ -36,204 +97,304 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(
-      canPop: _selectedIndex == 0, // Only allow popping when on home tab
-      onPopInvoked: (didPop) {
-        if (!didPop && _selectedIndex != 0) {
-          // If not on home tab and back is pressed, go to home tab
-          setState(() {
-            _selectedIndex = 0;
-          });
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade50,
-        drawer: _buildProfileDrawer(),
-        appBar: AppBar(
-          title: GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const LeaderboardScreen(),
-                ),
-              );
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.green.shade300,
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.eco,
-                    color: Colors.green.shade700,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'EcoHero',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          backgroundColor: Colors.green.shade700,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_outlined,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                _showNotificationComingSoonDialog();
-              },
-            ),
-            // EnvPoints Display
-            StreamBuilder<UserProfile?>(
-              stream: UserService.getUserProfileStream(),
-              builder: (context, snapshot) {
-                final envPoints = snapshot.data?.envPoints ?? 0;
-                return Container(
-                  margin: const EdgeInsets.only(right: 15, top: 12, bottom: 12),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.eco, color: Colors.green.shade700, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        snapshot.hasError ? '0' : '$envPoints',
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-        body: _buildBody(),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.green.shade700,
-          unselectedItemColor: Colors.grey.shade600,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_outlined),
-              activeIcon: Icon(Icons.assignment),
-              label: 'Tasks',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.eco_outlined),
-              activeIcon: Icon(Icons.eco),
-              label: 'Carbon',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.delete_outline),
-              activeIcon: Icon(Icons.delete),
-              label: 'Waste',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              activeIcon: Icon(Icons.article),
-              label: 'News',
-            ),
-          ],
-        ),
-      ), // Close PopScope
-    ); // Close build method
-  }
-
-  Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildDashboard();
-      case 1:
-        return const TasksScreen();
-      case 2:
-        return const CarbonCalculatorScreen();
-      case 3:
-        return const WasteScannerScreen();
-      case 4:
-        return const NewsScreen();
-      default:
-        return _buildDashboard();
+  Future<void> _initializeTheme() async {
+    try {
+      await _themeService.initialize();
+    } catch (e) {
+      debugPrint('Error initializing theme: $e');
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _themeService,
+      builder: (context, child) {
+        final isGrassTheme = _themeService.isGrassTheme;
+        final mainColor = isGrassTheme ? Colors.green : Colors.blue;
+        final flowerType = _themeService.currentTheme.flowerType;
+
+        return PopScope(
+          canPop: _selectedIndex == 0, // Only allow popping when on home tab
+          onPopInvoked: (didPop) {
+            if (!didPop && _selectedIndex != 0) {
+              // If not on home tab and back is pressed, go to home tab
+              setState(() {
+                _selectedIndex = 0;
+              });
+              // Restart animations when returning to home
+              _welcomeController.reset();
+              _contentController.reset();
+              _welcomeController.forward();
+              _contentController.forward();
+            }
+          },
+          child: Scaffold(
+            backgroundColor:
+                isGrassTheme ? Colors.green.shade50 : Colors.blue.shade50,
+            drawer: _buildProfileDrawer(isGrassTheme, mainColor, flowerType),
+            appBar: _buildAppBar(isGrassTheme, mainColor, flowerType),
+            body: _buildBody(),
+            bottomNavigationBar: _buildBottomNavigationBar(mainColor),
+          ), // Close PopScope
+        ); // Close build method
+      },
+    );
+  }
+
+  AppBar _buildAppBar(
+    bool isGrassTheme,
+    MaterialColor mainColor,
+    FlowerType flowerType,
+  ) {
+    return AppBar(
+      title: GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const LeaderboardScreen()),
+          );
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: mainColor.shade300,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(Icons.eco, color: mainColor.shade700, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'EcoHero',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: mainColor.shade700,
+      elevation: 0,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+          onPressed: () {
+            _showNotificationComingSoonDialog();
+          },
+        ),
+        // EnvPoints Display with themed flower icon
+        StreamBuilder<UserProfile?>(
+          stream: UserService.getUserProfileStream(),
+          builder: (context, snapshot) {
+            final envPoints = snapshot.data?.envPoints ?? 0;
+            return Container(
+              margin: const EdgeInsets.only(right: 15, top: 12, bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildFlowerIcon(flowerType, 16, mainColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    snapshot.hasError ? '0' : '$envPoints',
+                    style: TextStyle(
+                      color: mainColor.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFlowerIcon(
+    FlowerType flowerType,
+    double size,
+    MaterialColor mainColor,
+  ) {
+    if (!_themeService.isGrassTheme) {
+      return Icon(Icons.eco, color: mainColor.shade700, size: size);
+    }
+
+    switch (flowerType) {
+      case FlowerType.redRose:
+        return Icon(
+          Icons.local_florist,
+          size: size,
+          color: Colors.red.shade600,
+        );
+      case FlowerType.tulip:
+        return Icon(Icons.eco, size: size, color: Colors.pink.shade400);
+      case FlowerType.lotus:
+        return Icon(Icons.spa, size: size, color: Colors.purple.shade400);
+    }
+  }
+
+  BottomNavigationBar _buildBottomNavigationBar(MaterialColor mainColor) {
+    return BottomNavigationBar(
+      currentIndex: _selectedIndex,
+      onTap: (index) {
+        if (index != _selectedIndex) {
+          _pageTransitionController.reset();
+          setState(() {
+            _selectedIndex = index;
+          });
+          _pageTransitionController.forward();
+
+          // When returning to home, restart the animations
+          if (index == 0) {
+            _welcomeController.reset();
+            _contentController.reset();
+            _welcomeController.forward();
+            _contentController.forward();
+          }
+        }
+      },
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: mainColor.shade700,
+      unselectedItemColor: Colors.grey.shade600,
+      backgroundColor: _themeService.isGrassTheme
+          ? Colors.green.shade100
+          : Colors.blue.shade100,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_outlined),
+          activeIcon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.assignment_outlined),
+          activeIcon: Icon(Icons.assignment),
+          label: 'Tasks',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.eco_outlined),
+          activeIcon: Icon(Icons.eco),
+          label: 'Carbon',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.delete_outline),
+          activeIcon: Icon(Icons.delete),
+          label: 'Waste',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.article_outlined),
+          activeIcon: Icon(Icons.article),
+          label: 'News',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    final isGrassTheme = _themeService.isGrassTheme;
+    final flowerType = _themeService.currentTheme.flowerType;
+
+    Widget bodyContent;
+    switch (_selectedIndex) {
+      case 0:
+        bodyContent = _buildDashboard();
+        break;
+      case 1:
+        bodyContent = const TasksScreen();
+        break;
+      case 2:
+        bodyContent = const CarbonCalculatorScreen();
+        break;
+      case 3:
+        bodyContent = const WasteScannerScreen();
+        break;
+      case 4:
+        bodyContent = const NewsScreenEnhanced();
+        break;
+      default:
+        bodyContent = _buildDashboard();
+    }
+
+    // Wrap with themed background
+    Widget themedContent;
+    if (_selectedIndex == 0) {
+      // Dashboard gets the full background treatment
+      if (isGrassTheme) {
+        themedContent = AnimatedGrassBackground(
+          flowerType: flowerType,
+          child: bodyContent,
+        );
+      } else {
+        themedContent = AnimatedMarineBackground(child: bodyContent);
+      }
+    } else {
+      themedContent = bodyContent;
+    }
+
+    // Add animated vine background for grass theme on all screens
+    if (isGrassTheme) {
+      return AnimatedVineBackground(isVisible: true, child: themedContent);
+    }
+
+    return themedContent;
+  }
+
   Widget _buildDashboard() {
+    final isGrassTheme = _themeService.isGrassTheme;
+    final mainColor = isGrassTheme ? Colors.green : Colors.blue;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Welcome Section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.green.shade600, Colors.green.shade800],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
+          _buildThemedContainer(
+            isGrassTheme: isGrassTheme,
+            mainColor: mainColor,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Welcome back, Eco Hero! 🌱',
+                Text(
+                  isGrassTheme
+                      ? 'Welcome back, Eco Hero! 🌱'
+                      : 'Welcome back, Eco Hero! 🌊',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: isGrassTheme
+                        ? Colors.white
+                        : _themeService.currentTheme.onPrimaryColor,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Ready to make a positive impact today?',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                Text(
+                  isGrassTheme
+                      ? 'Ready to make a positive impact today?'
+                      : 'Dive into ocean conservation today!',
+                  style: TextStyle(
+                    color: isGrassTheme
+                        ? Colors.white70
+                        : _themeService.currentTheme.onPrimaryColor
+                            .withOpacity(0.8),
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -256,112 +417,178 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 24),
 
-          // Quick Actions
-          const Text(
-            'Quick Actions',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            children: [
-              _buildActionCard(
-                icon: Icons.assignment_add,
-                title: 'Log Activity',
-                subtitle: 'Submit eco task',
-                color: Colors.blue,
-                onTap: () {
-                  setState(() {
-                    _selectedIndex = 1;
-                  });
-                },
-              ),
-              _buildActionCard(
-                icon: Icons.calculate,
-                title: 'Carbon Check',
-                subtitle: 'Calculate footprint',
-                color: Colors.orange,
-                onTap: () {
-                  setState(() {
-                    _selectedIndex = 2;
-                  });
-                },
-              ),
-              _buildActionCard(
-                icon: Icons.camera_alt,
-                title: 'Scan Waste',
-                subtitle: 'Classify waste',
-                color: Colors.purple,
-                onTap: () {
-                  setState(() {
-                    _selectedIndex = 3;
-                  });
-                },
-              ),
-              _buildActionCard(
-                icon: Icons.article,
-                title: 'Read News',
-                subtitle: 'Eco updates',
-                color: Colors.teal,
-                onTap: () {
-                  setState(() {
-                    _selectedIndex = 4;
-                  });
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // Recent Activity
-          const Text(
-            'Recent Activity',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade200,
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: const Column(
-              children: [
-                Icon(Icons.eco, size: 48, color: Colors.grey),
-                SizedBox(height: 16),
-                Text(
-                  'No activities yet',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey,
+          // Animated Content Section
+          SlideTransition(
+            position: _contentSlideAnimation,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Quick Actions
+                  Text(
+                    'Quick Actions',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isGrassTheme
+                          ? mainColor.shade800
+                          : Colors.white, // White for marine theme
+                    ),
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Start logging your eco-friendly activities to see them here',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
+                  const SizedBox(height: 16),
+
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio:
+                        1.1, // Increased aspect ratio to give more height
+                    children: [
+                      _buildActionCard(
+                        icon: Icons.assignment_add,
+                        title: 'Log Activity',
+                        subtitle: 'Submit eco task',
+                        color: mainColor,
+                        isGrassTheme: isGrassTheme,
+                        onTap: () {
+                          _pageTransitionController.reset();
+                          setState(() {
+                            _selectedIndex = 1;
+                          });
+                          _pageTransitionController.forward();
+                        },
+                      ),
+                      _buildActionCard(
+                        icon: Icons.calculate,
+                        title: 'Carbon Check',
+                        subtitle: 'Calculate footprint',
+                        color: Colors.orange,
+                        isGrassTheme: isGrassTheme,
+                        onTap: () {
+                          _pageTransitionController.reset();
+                          setState(() {
+                            _selectedIndex = 2;
+                          });
+                          _pageTransitionController.forward();
+                        },
+                      ),
+                      _buildActionCard(
+                        icon: Icons.camera_alt,
+                        title: 'Scan Waste',
+                        subtitle: 'Classify waste',
+                        color: Colors.purple,
+                        isGrassTheme: isGrassTheme,
+                        onTap: () {
+                          _pageTransitionController.reset();
+                          setState(() {
+                            _selectedIndex = 3;
+                          });
+                          _pageTransitionController.forward();
+                        },
+                      ),
+                      _buildActionCard(
+                        icon: Icons.article,
+                        title: 'Read News',
+                        subtitle: 'Eco updates',
+                        color: Colors.teal,
+                        isGrassTheme: isGrassTheme,
+                        onTap: () {
+                          _pageTransitionController.reset();
+                          setState(() {
+                            _selectedIndex = 4;
+                          });
+                          _pageTransitionController.forward();
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Recent Activity
+                  Text(
+                    'Recent Activity',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: mainColor.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildThemedContainer(
+                    isGrassTheme: isGrassTheme,
+                    mainColor: mainColor,
+                    child: const Column(
+                      children: [
+                        Icon(Icons.eco, size: 48, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'No activities yet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Start logging your eco-friendly activities to see them here',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildThemedContainer({
+    required bool isGrassTheme,
+    required MaterialColor mainColor,
+    required Widget child,
+  }) {
+    final theme = _themeService.currentTheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isGrassTheme
+              ? [mainColor.shade600, mainColor.shade800]
+              : theme.primaryGradient, // Use the beautiful ocean gradient
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: isGrassTheme
+            ? Border.all(color: Colors.green.shade400, width: 2)
+            : Border.all(
+                color: theme.bioluminescenceColor.withOpacity(0.5),
+                width: 2), // Glowing border for marine
+        boxShadow: [
+          BoxShadow(
+            color: isGrassTheme
+                ? mainColor.shade200
+                : theme.bioluminescenceColor
+                    .withOpacity(0.3), // Glowing shadow for marine
+            blurRadius: isGrassTheme ? 10 : 20,
+            offset: const Offset(0, 5),
+            spreadRadius: isGrassTheme ? 0 : 3,
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 
@@ -371,52 +598,158 @@ class _HomeScreenState extends State<HomeScreen> {
     required String subtitle,
     required Color color,
     required VoidCallback onTap,
+    required bool isGrassTheme,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade200,
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
+    final theme = _themeService.currentTheme;
+
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 600),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.8 + (0.2 * value),
+          child: Opacity(
+            opacity: value,
+            child: GestureDetector(
+              onTap: onTap,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isGrassTheme
+                        ? [Colors.white, color.withOpacity(0.05)]
+                        : [
+                            theme.cardColor,
+                            theme.primaryColor.withOpacity(0.1),
+                          ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isGrassTheme
+                        ? color.withOpacity(0.3)
+                        : theme.bioluminescenceColor.withOpacity(0.4),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isGrassTheme
+                          ? color.withOpacity(0.15)
+                          : theme.bioluminescenceColor.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                      spreadRadius: 2,
+                    ),
+                    if (!isGrassTheme) ...[
+                      // Add extra glow for marine theme
+                      BoxShadow(
+                        color: theme.bioluminescenceColor.withOpacity(0.2),
+                        blurRadius: 25,
+                        offset: const Offset(0, 0),
+                        spreadRadius: 5,
+                      ),
+                    ] else ...[
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.8),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                        spreadRadius: -2,
+                      ),
+                    ],
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isGrassTheme
+                              ? [
+                                  color.withOpacity(0.8),
+                                  color.withOpacity(0.6),
+                                ]
+                              : [
+                                  theme.accentColor.withOpacity(0.9),
+                                  theme.secondaryColor.withOpacity(0.7),
+                                ],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: isGrassTheme
+                                ? color.withOpacity(0.3)
+                                : theme.bioluminescenceColor.withOpacity(0.5),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                          if (!isGrassTheme) ...[
+                            // Extra glow for marine theme
+                            BoxShadow(
+                              color:
+                                  theme.bioluminescenceColor.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 0),
+                              spreadRadius: 3,
+                            ),
+                          ],
+                        ],
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 24,
+                        color:
+                            isGrassTheme ? Colors.white : theme.onPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isGrassTheme
+                            ? Colors.grey.shade800
+                            : theme.textColor,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis, // Handle overflow
+                    ),
+                    const SizedBox(height: 2), // Reduced from 4
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isGrassTheme
+                            ? Colors.grey.shade600
+                            : theme.textColor.withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-              child: Icon(icon, size: 32, color: color),
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildProfileDrawer() {
+  Widget _buildProfileDrawer(
+    bool isGrassTheme,
+    MaterialColor mainColor,
+    FlowerType flowerType,
+  ) {
     return Drawer(
       child: Column(
         children: [
@@ -446,7 +779,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.green.shade600, Colors.green.shade800],
+                      colors: [mainColor.shade600, mainColor.shade800],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -458,33 +791,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           // Profile Image
                           GestureDetector(
-                            onTap:
-                                () => _showProfilePictureDialog(
-                                  userProfile?.profileImageUrl,
-                                ),
+                            onTap: () => _showProfilePictureDialog(
+                              userProfile?.profileImageUrl,
+                            ),
                             child: CircleAvatar(
                               radius: 35,
                               backgroundColor: Colors.white,
-                              backgroundImage:
-                                  userProfile?.profileImageUrl != null
-                                      ? (userProfile!.profileImageUrl!
-                                              .startsWith('http')
-                                          ? NetworkImage(
-                                                userProfile.profileImageUrl!,
-                                              )
-                                              as ImageProvider
-                                          : FileImage(
-                                            File(userProfile.profileImageUrl!),
-                                          ))
-                                      : null,
-                              child:
-                                  userProfile?.profileImageUrl == null
-                                      ? Icon(
-                                        Icons.person,
-                                        size: 35,
-                                        color: Colors.green.shade600,
-                                      )
-                                      : null,
+                              backgroundImage: userProfile?.profileImageUrl !=
+                                      null
+                                  ? (userProfile!.profileImageUrl!
+                                          .startsWith('http')
+                                      ? NetworkImage(
+                                          userProfile.profileImageUrl!,
+                                        ) as ImageProvider
+                                      : FileImage(
+                                          File(userProfile.profileImageUrl!),
+                                        ))
+                                  : null,
+                              child: userProfile?.profileImageUrl == null
+                                  ? Icon(
+                                      Icons.person,
+                                      size: 35,
+                                      color: mainColor.shade600,
+                                    )
+                                  : null,
                             ),
                           ),
                           const SizedBox(width: 15),
@@ -522,10 +852,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
-                                        Icons.eco,
-                                        color: Colors.white,
-                                        size: 16,
+                                      _buildFlowerIcon(
+                                        flowerType,
+                                        16,
+                                        mainColor,
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
@@ -614,6 +944,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => const RewardsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.settings, color: Colors.grey.shade600),
+                  title: const Text(
+                    'Settings',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: const Text('Theme and preferences'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
                       ),
                     );
                   },
@@ -1176,44 +1522,43 @@ class _ProfilePictureDialogState extends State<ProfilePictureDialog>
                           ],
                         ),
                         child: ClipOval(
-                          child:
-                              widget.profileImageUrl != null
-                                  ? (widget.profileImageUrl!.startsWith('http')
-                                      ? Image.network(
-                                        widget.profileImageUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          return Icon(
-                                            Icons.person,
-                                            size: 120,
-                                            color: Colors.green.shade600,
-                                          );
-                                        },
-                                      )
-                                      : Image.file(
-                                        File(widget.profileImageUrl!),
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          return Icon(
-                                            Icons.person,
-                                            size: 120,
-                                            color: Colors.green.shade600,
-                                          );
-                                        },
-                                      ))
-                                  : Icon(
-                                    Icons.person,
-                                    size: 120,
-                                    color: Colors.green.shade600,
-                                  ),
+                          child: widget.profileImageUrl != null
+                              ? (widget.profileImageUrl!.startsWith('http')
+                                  ? Image.network(
+                                      widget.profileImageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) {
+                                        return Icon(
+                                          Icons.person,
+                                          size: 120,
+                                          color: Colors.green.shade600,
+                                        );
+                                      },
+                                    )
+                                  : Image.file(
+                                      File(widget.profileImageUrl!),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) {
+                                        return Icon(
+                                          Icons.person,
+                                          size: 120,
+                                          color: Colors.green.shade600,
+                                        );
+                                      },
+                                    ))
+                              : Icon(
+                                  Icons.person,
+                                  size: 120,
+                                  color: Colors.green.shade600,
+                                ),
                         ),
                       ),
                       // Edit button only

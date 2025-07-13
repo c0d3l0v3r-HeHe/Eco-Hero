@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.c0d3l0v3r.eco_hero_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {

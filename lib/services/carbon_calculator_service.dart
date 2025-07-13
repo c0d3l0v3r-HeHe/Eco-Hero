@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/carbon_footprint.dart';
 
 class CarbonCalculatorService {
@@ -187,6 +188,12 @@ class CarbonCalculatorService {
       // Return last 30 entries
       return footprints.take(30).toList();
     } catch (e) {
+      debugPrint('Failed to get carbon history: $e');
+      // Return empty list instead of throwing for index errors
+      if (e.toString().contains('failed-precondition') ||
+          e.toString().contains('index')) {
+        return [];
+      }
       throw Exception('Failed to get carbon history: $e');
     }
   }
@@ -224,6 +231,12 @@ class CarbonCalculatorService {
 
       return totalEmissions / footprints.length;
     } catch (e) {
+      debugPrint('Failed to calculate average carbon footprint: $e');
+      // Return 0.0 instead of throwing for index errors
+      if (e.toString().contains('failed-precondition') ||
+          e.toString().contains('index')) {
+        return 0.0;
+      }
       throw Exception('Failed to calculate average carbon footprint: $e');
     }
   }

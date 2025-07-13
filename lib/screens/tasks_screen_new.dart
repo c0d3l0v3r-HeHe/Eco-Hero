@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/app_theme.dart';
-import '../models/eco_task.dart';
-import '../services/task_service.dart';
+import '../models/user_profile.dart';
+import '../services/user_service.dart';
 import '../services/theme_service.dart';
 import '../widgets/animated_page_transition.dart';
 import '../widgets/animated_vine_background.dart';
@@ -181,269 +180,222 @@ class _TasksScreenState extends State<TasksScreen>
       listenable: _themeService,
       builder: (context, child) {
         final isGrassTheme = _themeService.isGrassTheme;
-        final theme = _themeService.currentTheme;
         final mainColor = isGrassTheme ? Colors.green : Colors.blue;
 
-        return Stack(
-          children: [
-            // Add marine background for marine theme
-            if (!isGrassTheme)
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: theme.primaryGradient,
-                  ),
-                ),
-              ),
-
-            AnimatedVineBackground(
-              isVisible: isGrassTheme,
-              child: AnimatedPageTransition(
-                child: Scaffold(
-                  backgroundColor: isGrassTheme
-                      ? Colors.green.shade50
-                      : Colors.transparent, // Transparent for marine theme
-                  body: CustomScrollView(
-                    slivers: [
-                      // Enhanced App Bar
-                      SliverAppBar(
-                        expandedHeight: 140,
-                        floating: false,
-                        pinned: true,
-                        backgroundColor: isGrassTheme
-                            ? Colors.green.shade700
-                            : theme.primaryColor,
-                        flexibleSpace: FlexibleSpaceBar(
-                          title: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isGrassTheme ? Icons.eco : Icons.waves,
-                                color: isGrassTheme
-                                    ? Colors.white
-                                    : theme.onPrimaryColor,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Eco Tasks',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isGrassTheme
-                                      ? Colors.white
-                                      : theme.onPrimaryColor,
-                                  fontSize: 20,
-                                ),
-                              ),
-                            ],
-                          ),
-                          centerTitle: true,
-                          background: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: isGrassTheme
-                                    ? [
-                                        Colors.green.shade900,
-                                        Colors.green.shade700
-                                      ]
-                                    : theme.primaryGradient,
-                              ),
+        return AnimatedVineBackground(
+          isVisible: isGrassTheme,
+          child: AnimatedPageTransition(
+            child: Scaffold(
+              backgroundColor:
+                  isGrassTheme ? Colors.green.shade50 : Colors.blue.shade50,
+              body: CustomScrollView(
+                slivers: [
+                  // Enhanced App Bar
+                  SliverAppBar(
+                    expandedHeight: 140,
+                    floating: false,
+                    pinned: true,
+                    backgroundColor: mainColor.shade700,
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.eco, color: Colors.white, size: 24),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Eco Tasks',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 20,
                             ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.white.withOpacity(0.1),
-                                    Colors.transparent,
+                          ),
+                        ],
+                      ),
+                      centerTitle: true,
+                      background: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [mainColor.shade900, mainColor.shade700],
+                          ),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withOpacity(0.1),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Animated Task Submission Form
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: SlideTransition(
+                        position: _formSlideAnimation,
+                        child: ScaleTransition(
+                          scale: _formScaleAnimation,
+                          child: FadeTransition(
+                            opacity: _formOpacityAnimation,
+                            child: _buildEnhancedForm(mainColor),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Animated Task History Header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                      child: TweenAnimationBuilder<double>(
+                        duration: const Duration(milliseconds: 600),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: Opacity(
+                              opacity: value,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      mainColor.shade100,
+                                      mainColor.shade50,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(color: mainColor.shade200),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.history,
+                                      color: mainColor.shade700,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Your Recent Activities',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: mainColor.shade800,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
+                    ),
+                  ),
 
-                      // Animated Task Submission Form
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: SlideTransition(
-                            position: _formSlideAnimation,
-                            child: ScaleTransition(
-                              scale: _formScaleAnimation,
-                              child: FadeTransition(
-                                opacity: _formOpacityAnimation,
-                                child: _buildEnhancedForm(
-                                    theme, isGrassTheme, mainColor),
+                  // Enhanced Task History List
+                  StreamBuilder<List<EcoTask>>(
+                    stream: TaskService.getUserTasks(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return SliverToBoxAdapter(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(40),
+                              child: Column(
+                                children: [
+                                  CircularProgressIndicator(
+                                    color: mainColor.shade600,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Loading your eco activities...',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      }
 
-                      // Animated Task History Header
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                          child: TweenAnimationBuilder<double>(
-                            duration: const Duration(milliseconds: 600),
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            builder: (context, value, child) {
-                              return Transform.translate(
-                                offset: Offset(0, 20 * (1 - value)),
-                                child: Opacity(
-                                  opacity: value,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          mainColor.shade100,
-                                          mainColor.shade50,
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(15),
-                                      border:
-                                          Border.all(color: mainColor.shade200),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.history,
-                                          color: mainColor.shade700,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Your Recent Activities',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: mainColor.shade800,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
+                      if (snapshot.hasError) {
+                        return SliverToBoxAdapter(
+                          child: _buildErrorState(mainColor),
+                        );
+                      }
 
-                      // Enhanced Task History List
-                      SliverToBoxAdapter(
-                        child: StreamBuilder<List<EcoTask>>(
-                          stream: TaskService.getUserTasks(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(40),
-                                  child: Column(
-                                    children: [
-                                      CircularProgressIndicator(
-                                        color: mainColor.shade600,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'Loading your eco activities...',
-                                        style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
+                      final tasks = snapshot.data ?? [];
 
-                            if (snapshot.hasError) {
-                              return _buildErrorState(mainColor);
-                            }
+                      if (tasks.isEmpty) {
+                        return SliverToBoxAdapter(
+                          child: _buildEmptyState(mainColor),
+                        );
+                      }
 
-                            final tasks = snapshot.data ?? [];
-
-                            if (tasks.isEmpty) {
-                              return _buildEmptyState(mainColor);
-                            }
-
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: tasks.length,
-                              itemBuilder: (context, index) {
-                                return _buildAnimatedTaskItem(
-                                  tasks[index],
-                                  index,
-                                  mainColor,
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Bottom padding
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                    ],
+                      return SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          return _buildAnimatedTaskItem(
+                            tasks[index],
+                            index,
+                            mainColor,
+                          );
+                        }, childCount: tasks.length),
+                      );
+                    },
                   ),
-                ),
+
+                  // Bottom padding
+                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                ],
               ),
             ),
-          ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildEnhancedForm(
-      AppTheme theme, bool isGrassTheme, MaterialColor mainColor) {
+  Widget _buildEnhancedForm(MaterialColor mainColor) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: isGrassTheme
-              ? [Colors.white, Colors.green.shade50.withOpacity(0.3)]
-              : [theme.cardColor, theme.surfaceColor.withOpacity(0.7)],
+          colors: [Colors.white, mainColor.shade50.withOpacity(0.3)],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isGrassTheme
-              ? Colors.green.shade200
-              : theme.bioluminescenceColor.withOpacity(0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: mainColor.shade200, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: isGrassTheme
-                ? Colors.green.shade100.withOpacity(0.5)
-                : theme.bioluminescenceColor.withOpacity(0.2),
+            color: mainColor.shade100.withOpacity(0.5),
             spreadRadius: 3,
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
-          if (isGrassTheme) ...[
-            BoxShadow(
-              color: Colors.white.withOpacity(0.8),
-              spreadRadius: -2,
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+          BoxShadow(
+            color: Colors.white.withOpacity(0.8),
+            spreadRadius: -2,
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
         ],
       ),
       child: Form(
@@ -754,7 +706,7 @@ class _TasksScreenState extends State<TasksScreen>
                                 ),
                               ),
                               Text(
-                                _formatDate(task.createdAt),
+                                _formatDate(task.completedAt),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey.shade500,

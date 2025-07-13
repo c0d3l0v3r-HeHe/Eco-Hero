@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../models/user_profile.dart';
 import '../services/user_service.dart';
+import '../services/theme_service.dart';
 
 class WasteScannerScreen extends StatefulWidget {
   const WasteScannerScreen({super.key});
@@ -18,6 +19,7 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
   bool _isInitialized = false;
   bool _isProcessing = false;
   bool _isFlashOn = false;
+  final ThemeService _themeService = ThemeService();
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -138,7 +140,10 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
                       'Analyzing waste...',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.green.shade700,
+                        color:
+                            _themeService.isGrassTheme
+                                ? Colors.green.shade700
+                                : Colors.blue.shade700,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -213,12 +218,18 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.green.shade100,
+                                      color:
+                                          _themeService.isGrassTheme
+                                              ? Colors.green.shade100
+                                              : Colors.blue.shade100,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
                                       _getWasteIcon(classification.wasteType),
-                                      color: Colors.green.shade700,
+                                      color:
+                                          _themeService.isGrassTheme
+                                              ? Colors.green.shade700
+                                              : Colors.blue.shade700,
                                       size: 24,
                                     ),
                                   ),
@@ -240,7 +251,10 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
                                           style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.green.shade700,
+                                            color:
+                                                _themeService.isGrassTheme
+                                                    ? Colors.green.shade700
+                                                    : Colors.blue.shade700,
                                           ),
                                         ),
                                       ],
@@ -371,7 +385,10 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
                                               color:
                                                   classification.confidence >
                                                           0.8
-                                                      ? Colors.green
+                                                      ? (_themeService
+                                                              .isGrassTheme
+                                                          ? Colors.green
+                                                          : Colors.blue)
                                                       : classification
                                                               .confidence >
                                                           0.6
@@ -404,7 +421,10 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green.shade700,
+                                  color:
+                                      _themeService.isGrassTheme
+                                          ? Colors.green.shade700
+                                          : Colors.blue.shade700,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -448,7 +468,10 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
                                 child: ElevatedButton(
                                   onPressed: () => Navigator.of(context).pop(),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green.shade700,
+                                    backgroundColor:
+                                        _themeService.isGrassTheme
+                                            ? Colors.green.shade700
+                                            : Colors.blue.shade700,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 15,
@@ -503,7 +526,9 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
       case 'glass':
         return Colors.teal.shade600;
       case 'organic':
-        return Colors.green.shade600;
+        return _themeService.isGrassTheme
+            ? Colors.green.shade600
+            : Colors.blue.shade600;
       case 'electronic':
         return Colors.purple.shade600;
       default:
@@ -519,214 +544,225 @@ class _WasteScannerScreenState extends State<WasteScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text(
-          'Waste Scanner',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        backgroundColor: Colors.green.shade700,
-        iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 0,
-      ),
-      body:
-          _isInitialized
-              ? Stack(
-                children: [
-                  // Camera Preview
-                  Positioned.fill(
-                    child: ClipRect(
-                      child: OverflowBox(
-                        alignment: Alignment.center,
-                        child: FittedBox(
-                          fit: BoxFit.fitWidth,
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width,
-                            height:
-                                MediaQuery.of(context).size.width /
-                                _cameraController!.value.aspectRatio,
-                            child: CameraPreview(_cameraController!),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+    return ListenableBuilder(
+      listenable: _themeService,
+      builder: (context, child) {
+        final isGrassTheme = _themeService.isGrassTheme;
+        final mainColor = isGrassTheme ? Colors.green : Colors.blue;
 
-                  // Overlay
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
-                      ),
-                    ),
-                  ),
-
-                  // Scanning Frame
-                  Center(
-                    child: Container(
-                      width: 250,
-                      height: 250,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.green.shade400,
-                          width: 3,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Stack(
-                        children: [
-                          // Corner indicators
-                          Positioned(
-                            top: -1,
-                            left: -1,
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade400,
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(8),
-                                ),
+        return Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            title: const Text(
+              'Waste Scanner',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: mainColor.shade700,
+            iconTheme: const IconThemeData(color: Colors.white),
+            elevation: 0,
+          ),
+          body:
+              _isInitialized
+                  ? Stack(
+                    children: [
+                      // Camera Preview
+                      Positioned.fill(
+                        child: ClipRect(
+                          child: OverflowBox(
+                            alignment: Alignment.center,
+                            child: FittedBox(
+                              fit: BoxFit.fitWidth,
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width,
+                                height:
+                                    MediaQuery.of(context).size.width /
+                                    _cameraController!.value.aspectRatio,
+                                child: CameraPreview(_cameraController!),
                               ),
                             ),
                           ),
-                          Positioned(
-                            top: -1,
-                            right: -1,
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade400,
-                                borderRadius: const BorderRadius.only(
-                                  topRight: Radius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: -1,
-                            left: -1,
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade400,
-                                borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: -1,
-                            right: -1,
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade400,
-                                borderRadius: const BorderRadius.only(
-                                  bottomRight: Radius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Instructions
-                  Positioned(
-                    top: 100,
-                    left: 20,
-                    right: 20,
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Position the waste item within the frame and tap the capture button',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ),
-                  ),
 
-                  // Bottom Controls
-                  Positioned(
-                    bottom: 50,
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Gallery Button
-                        FloatingActionButton(
-                          heroTag: "gallery",
-                          onPressed:
-                              _isProcessing ? null : _pickImageFromGallery,
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.photo_library,
-                            color: Colors.green.shade700,
+                      // Overlay
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
                           ),
                         ),
+                      ),
 
-                        // Capture Button
-                        FloatingActionButton.large(
-                          heroTag: "capture",
-                          onPressed: _isProcessing ? null : _takePicture,
-                          backgroundColor: Colors.green.shade700,
-                          child:
-                              _isProcessing
-                                  ? const CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  )
-                                  : const Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.white,
-                                    size: 32,
+                      // Scanning Frame
+                      Center(
+                        child: Container(
+                          width: 250,
+                          height: 250,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: mainColor.shade400,
+                              width: 3,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Stack(
+                            children: [
+                              // Corner indicators
+                              Positioned(
+                                top: -1,
+                                left: -1,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: mainColor.shade400,
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(8),
+                                    ),
                                   ),
-                        ),
-
-                        // Flash Button
-                        FloatingActionButton(
-                          heroTag: "flash",
-                          onPressed: _toggleFlash,
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                            color: Colors.green.shade700,
+                                ),
+                              ),
+                              Positioned(
+                                top: -1,
+                                right: -1,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: mainColor.shade400,
+                                    borderRadius: const BorderRadius.only(
+                                      topRight: Radius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: -1,
+                                left: -1,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: mainColor.shade400,
+                                    borderRadius: const BorderRadius.only(
+                                      bottomLeft: Radius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: -1,
+                                right: -1,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: mainColor.shade400,
+                                    borderRadius: const BorderRadius.only(
+                                      bottomRight: Radius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                      ),
+
+                      // Instructions
+                      Positioned(
+                        top: 100,
+                        left: 20,
+                        right: 20,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Position the waste item within the frame and tap the capture button',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Bottom Controls
+                      Positioned(
+                        bottom: 50,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Gallery Button
+                            FloatingActionButton(
+                              heroTag: "gallery",
+                              onPressed:
+                                  _isProcessing ? null : _pickImageFromGallery,
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                Icons.photo_library,
+                                color: mainColor.shade700,
+                              ),
+                            ),
+
+                            // Capture Button
+                            FloatingActionButton.large(
+                              heroTag: "capture",
+                              onPressed: _isProcessing ? null : _takePicture,
+                              backgroundColor: mainColor.shade700,
+                              child:
+                                  _isProcessing
+                                      ? const CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      )
+                                      : const Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.white,
+                                        size: 32,
+                                      ),
+                            ),
+
+                            // Flash Button
+                            FloatingActionButton(
+                              heroTag: "flash",
+                              onPressed: _toggleFlash,
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                                color: mainColor.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                  : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: mainColor.shade700),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Initializing camera...',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ],
                     ),
                   ),
-                ],
-              )
-              : Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(color: Colors.green.shade700),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Initializing camera...',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
+        );
+      },
     );
   }
 }
